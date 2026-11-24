@@ -240,7 +240,7 @@ export const combos: Combo[] = [
     regularPrice: 43000,
     promoPrice: null,
     badge: 'Ahorro Semanal',
-    image: '/images/hamburguesas-carne-verdura.webp',
+    image: '/images/milanesas-pollo.webp',
     available: true,
   },
   {
