@@ -240,7 +240,7 @@ export const combos: Combo[] = [
     regularPrice: 43000,
     promoPrice: null,
     badge: 'Ahorro Semanal',
-    image: '/images/milanesas-pollo.webp',
+    image: '/images/hamburguesas-carne-verdura.webp',
     available: true,
   },
   {
@@ -270,7 +270,7 @@ export const combos: Combo[] = [
     regularPrice: 64000,
     promoPrice: null,
     badge: 'Familiar',
-    image: '/images/milanesas-cuadrada.webp',
+    image: '/images/milanesas-nalga.webp',
     available: true,
   },
 ];

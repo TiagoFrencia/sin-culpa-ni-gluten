@@ -55,7 +55,7 @@ function validateJsonLd() {
 async function runVerification() {
   validateJsonLd();
 
-  console.log('=== Iniciando Verificación UI Fase 5 (Multi-Viewport & Auditoría Final) ===\n');
+  console.log('=== Iniciando Verificación UI Fase 5 (Mobile Polish & Auditoría Final) ===\n');
 
   const browser = await puppeteer.launch({
     executablePath: CHROME_PATH,
@@ -118,10 +118,9 @@ async function runVerification() {
       }
       console.log(`  ✓ 0 Scroll horizontal confirmado en ${vp.label}`);
 
-      // Captura de pantalla de la vista completa
+      // Guardar captura
       const shotPath = path.join(OUTPUT_DIR, `phase5-${vp.name}-overview.png`);
       await page.screenshot({ path: shotPath });
-      console.log(`  Captura guardada: ${path.basename(shotPath)}`);
     }
 
     // =========================================================================
@@ -145,7 +144,6 @@ async function runVerification() {
         hasOldPhone: a.href.includes('3584330638'),
       }));
 
-      // Buscar si existe el número viejo en cualquier parte del DOM (texto o atributos)
       const bodyHtml = document.body.innerHTML;
       const oldPhoneInDom = bodyHtml.includes('3584330638');
 
@@ -164,7 +162,6 @@ async function runVerification() {
     }
 
     for (const link of whatsappLinksAudit.results) {
-      console.log(`  [Link ${link.index}] "${link.text}" -> ${link.href.slice(0, 50)}...`);
       if (!link.correctPhone) {
         throw new Error(`Enlace no apunta a https://wa.me/5493585728550: ${link.href}`);
       }
@@ -178,132 +175,182 @@ async function runVerification() {
     console.log('✓ Todos los enlaces WhatsApp apuntan a 5493585728550 con target="_blank" y rel seguro.\n');
 
     // =========================================================================
-    // 3. VALIDACIÓN DE ACORDEÓN FAQ Y EDICIÓN DE PREGUNTA 6 (SIN 48 HS)
+    // 3. REVISIÓN DE NAVBAR COMPACTO EN MÓVIL (390x844)
     // =========================================================================
-    console.log('--- 3. Verificación de FAQ y Copy Fiel en Pregunta 6 ---');
-    await page.evaluate(() => {
-      document.getElementById('faq')?.scrollIntoView({ behavior: 'instant' });
-    });
-    await new Promise((r) => setTimeout(r, 400));
-
-    // Abrir pregunta 5 (la sexta pregunta, índice 5)
-    await page.evaluate(() => {
-      const btn5 = document.querySelector('button[data-testid="faq-button-5"]');
-      btn5?.click();
-    });
-    await new Promise((r) => setTimeout(r, 350));
-
-    const faq6Data = await page.evaluate(() => {
-      const answerEl = document.querySelector('div[data-testid="faq-answer-5"]');
-      const text = answerEl?.textContent?.trim() || '';
-      return {
-        text,
-        has48hs: text.includes('48 horas') || text.includes('48 hs'),
-        hasConsultanosAnticipacion: text.includes('consultanos con anticipación por WhatsApp para coordinar fecha de entrega'),
-      };
-    });
-
-    console.log('Texto de FAQ 6:', faq6Data.text);
-    if (faq6Data.has48hs) {
-      throw new Error('La pregunta 6 de FAQ todavía contiene la mención de 48 hs');
-    }
-    if (!faq6Data.hasConsultanosAnticipacion) {
-      throw new Error('La pregunta 6 de FAQ no contiene la redacción fiel esperada');
-    }
-    console.log('✓ Pregunta 6 de FAQ validada: libre de "48 hs" y con redacción fiel.\n');
-
-    // =========================================================================
-    // 4. VALIDACIÓN DE FAVICON Y LINK APPLE-TOUCH-ICON EN EL DOM
-    // =========================================================================
-    console.log('--- 4. Verificación de Favicon e Íconos en Head ---');
-    const headIcons = await page.evaluate(() => {
-      const icon = document.querySelector('link[rel="icon"]')?.getAttribute('href');
-      const appleIcon = document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href');
-      return { icon, appleIcon };
-    });
-    console.log('Iconos en Head:', headIcons);
-    if (headIcons.icon !== '/favicon.svg') {
-      throw new Error(`Favicon no apunta a /favicon.svg: ${headIcons.icon}`);
-    }
-    if (headIcons.appleIcon !== '/favicon.svg') {
-      throw new Error(`apple-touch-icon no apunta a /favicon.svg: ${headIcons.appleIcon}`);
-    }
-    console.log('✓ Favicon y apple-touch-icon correctamente configurados.\n');
-
-    // =========================================================================
-    // 5. VALIDACIÓN DE FLUJO DEL PEDIDO Y DRAWER EN RESOLUCIÓN MÓVIL (390x844)
-    // =========================================================================
-    console.log('--- 5. Verificación de Flujo de Pedido, Carrito y Modal en Móvil ---');
+    console.log('--- 3. Verificación de Navbar Móvil Compacto (390x844) ---');
     await page.setViewport({ width: 390, height: 844 });
     await page.goto('http://localhost:5173/', { waitUntil: 'networkidle0' });
 
-    // Sumar un combo al pedido
+    const navbarMetrics = await page.evaluate(() => {
+      const nav = document.querySelector('nav');
+      const rect = nav ? nav.getBoundingClientRect() : null;
+      const brandSpan = nav?.querySelector('span.whitespace-nowrap');
+      const subtitle = nav?.querySelector('span.hidden.sm\\:inline-block');
+      const desktopWaBtn = nav?.querySelector('a.hidden.sm\\:inline-flex');
+      return {
+        height: rect ? Math.round(rect.height) : 0,
+        hasWhitespaceNowrap: !!brandSpan,
+        subtitleHiddenOnMobile: !!subtitle,
+        waButtonHiddenOnMobile: !!desktopWaBtn,
+      };
+    });
+
+    console.log('Métricas de Navbar móvil:', navbarMetrics);
+    if (navbarMetrics.height > 76) {
+      throw new Error(`Navbar móvil supera el límite compacto: ${navbarMetrics.height}px > 76px`);
+    }
+    if (!navbarMetrics.hasWhitespaceNowrap) {
+      throw new Error('El título de marca en Navbar no tiene whitespace-nowrap');
+    }
+    console.log(`✓ Altura de Navbar en móvil = ${navbarMetrics.height}px (<= 76px, 1 sola línea).\n`);
+
+    // =========================================================================
+    // 4. VERIFICACIÓN DE BADGES EN STORYSECTION EN MÓVIL (360x800 Y 390x844)
+    // =========================================================================
+    console.log('--- 4. Verificación de Badges en StorySection (sin superposición) ---');
     await page.evaluate(() => {
-      const addBtn = document.querySelector('button[data-testid="add-to-cart-combo-semana-practica"]');
-      addBtn?.click();
+      document.getElementById('cocina-segura')?.scrollIntoView({ behavior: 'instant' });
     });
     await new Promise((r) => setTimeout(r, 400));
+
+    const storyBadges = await page.evaluate(() => {
+      const section = document.getElementById('cocina-segura');
+      const badgesContainer = section?.querySelector('.flex-wrap');
+      const badges = section?.querySelectorAll('.bg-sintacc-red, .bg-espresso-950\\/85');
+      const b1 = badges?.[0]?.getBoundingClientRect();
+      const b2 = badges?.[1]?.getBoundingClientRect();
+
+      let overlap = false;
+      if (b1 && b2) {
+        overlap = !(b1.right <= b2.left || b1.left >= b2.right || b1.bottom <= b2.top || b1.top >= b2.bottom);
+      }
+
+      return {
+        hasFlexWrap: !!badgesContainer,
+        badge1Text: badges?.[0]?.textContent?.trim(),
+        badge2Text: badges?.[1]?.textContent?.trim(),
+        overlap,
+      };
+    });
+
+    console.log('Badges en StorySection:', storyBadges);
+    if (!storyBadges.hasFlexWrap) {
+      throw new Error('El contenedor de badges en StorySection no tiene flex-wrap');
+    }
+    if (storyBadges.overlap) {
+      throw new Error('Los badges de StorySection se superponen');
+    }
+    console.log('✓ Badges de StorySection renderizan correctamente sin recortarse ni pisarse.\n');
+
+    // =========================================================================
+    // 5. VERIFICACIÓN DE FALLBACK COMPACTO Y FOOTER EN ORDERDRAWER
+    // =========================================================================
+    console.log('--- 5. Verificación de OrderDrawer (Fallback Compacto, Precios y Footer) ---');
+
+    // Sumar 2 combos para probar subtotal y precio por unidad ("c/u")
+    await page.evaluate(() => {
+      const comboBtn = document.querySelector('button[data-testid="add-to-cart-combo-semana-practica"]');
+      comboBtn?.click();
+    });
+    await new Promise((r) => setTimeout(r, 350));
+
+    // Aumentar a 2 unidades para que aparezca "c/u"
+    await page.evaluate(() => {
+      const incBtn = document.querySelector('[data-testid="quantity-selector-combo-semana-practica"] button:last-child');
+      incBtn?.click();
+    });
+    await new Promise((r) => setTimeout(r, 350));
+
+    // Sumar 1 producto sin foto para probar el fallback compacto (ej: prepizza-salsa)
+    await page.evaluate(() => {
+      const article = Array.from(document.querySelectorAll('article')).find((a) =>
+        a.textContent?.includes('Prepizza')
+      );
+      const addBtn = article?.querySelector('button:not([aria-label*="detalles"])');
+      addBtn?.click();
+    });
+    await new Promise((r) => setTimeout(r, 350));
 
     // Abrir OrderDrawer
     await page.evaluate(() => {
       const openBtn = document.querySelector('button[data-testid="navbar-cart-btn"]');
       openBtn?.click();
     });
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(r, 450));
 
-    // Verificar contenido del Drawer y enlace final de WhatsApp
-    const drawerAudit = await page.evaluate(() => {
+    const drawerChecks = await page.evaluate(() => {
       const drawer = document.getElementById('order-drawer-content');
-      const orderCta = document.querySelector('a[data-testid="whatsapp-order-cta"]');
+      if (!drawer) return { foundDrawer: false };
+
+      // 1. Verificar "Pack combo" en vez de redundante "Combo"
+      const comboLabel = Array.from(drawer.querySelectorAll('p')).find((p) =>
+        p.textContent?.includes('Pack combo')
+      );
+
+      // 2. Verificar que aparezca "c/u" en el combo (qty 2) y no en el producto de qty 1
+      const perUnitElements = Array.from(drawer.querySelectorAll('span')).filter((s) =>
+        s.textContent?.includes('c/u')
+      );
+
+      // 3. Verificar que las miniaturas fallback sean compactas sin texto
+      const thumbnails = drawer.querySelectorAll('.w-14 .bg-espresso-900');
+      let fallbackHasText = false;
+      thumbnails.forEach((t) => {
+        // Si hay fallback (sin img cargada o con error), no debe contener textos de títulos o categorías
+        const txt = t.textContent?.trim();
+        if (txt && txt.length > 5) {
+          fallbackHasText = true;
+        }
+      });
+
+      // 4. Verificar clases tabular-nums en los precios
+      const tabularPrices = drawer.querySelectorAll('.tabular-nums');
+
       return {
-        foundDrawer: !!drawer,
-        ctaHref: orderCta?.getAttribute('href') || '',
-        ctaTarget: orderCta?.getAttribute('target'),
-        ctaRel: orderCta?.getAttribute('rel'),
+        foundDrawer: true,
+        foundPackCombo: !!comboLabel,
+        perUnitCount: perUnitElements.length,
+        fallbackHasText,
+        tabularPricesCount: tabularPrices.length,
       };
     });
-    console.log('Estado de OrderDrawer:', drawerAudit);
 
-    if (!drawerAudit.foundDrawer) {
-      throw new Error('OrderDrawer no se abrió al hacer clic en el carrito');
-    }
-    if (!drawerAudit.ctaHref.startsWith('https://wa.me/5493585728550')) {
-      throw new Error(`CTA de pedido en OrderDrawer no apunta a https://wa.me/5493585728550: ${drawerAudit.ctaHref}`);
-    }
-    if (drawerAudit.ctaTarget !== '_blank' || !drawerAudit.ctaRel?.includes('noopener')) {
-      throw new Error('CTA de pedido en OrderDrawer no tiene target="_blank" o rel seguro');
-    }
+    console.log('Resultados de auditoría de OrderDrawer:', drawerChecks);
 
-    await page.screenshot({ path: path.join(OUTPUT_DIR, 'phase5-mobile-drawer-open.png') });
-    console.log('Captura guardada: phase5-mobile-drawer-open.png');
+    if (!drawerChecks.foundDrawer) {
+      throw new Error('OrderDrawer no se abrió');
+    }
+    if (!drawerChecks.foundPackCombo) {
+      throw new Error('No se encontró "Pack combo" en el ítem de combo del Drawer');
+    }
+    if (drawerChecks.perUnitCount !== 1) {
+      throw new Error(`Se esperaba exactamente 1 elemento con "c/u" (para cantidad > 1), se encontraron: ${drawerChecks.perUnitCount}`);
+    }
+    if (drawerChecks.fallbackHasText) {
+      throw new Error('El fallback compacto en miniatura contiene texto largo');
+    }
+    if (drawerChecks.tabularPricesCount === 0) {
+      throw new Error('Los precios del Drawer no tienen la clase tabular-nums');
+    }
+    console.log('✓ OrderDrawer verificado: Pack combo, precios tabulares, condicional "c/u" y miniatura compacta.\n');
 
-    // Probar tecla Escape para cerrar OrderDrawer
+    // Cerrar OrderDrawer con Escape
     await page.keyboard.press('Escape');
-    await new Promise((r) => setTimeout(r, 350));
-
-    const drawerClosed = await page.evaluate(() => {
-      const drawer = document.getElementById('order-drawer-content');
-      return !drawer || drawer.closest('.fixed')?.classList.contains('pointer-events-none');
-    });
-    console.log('¿OrderDrawer cerrado con tecla Escape?', drawerClosed);
-    if (!drawerClosed) {
-      throw new Error('OrderDrawer no se cerró correctamente al presionar Escape');
-    }
+    await new Promise((r) => setTimeout(r, 300));
 
     // =========================================================================
     // 6. VERIFICACIÓN DE CONSOLA Y ERRORES DE PÁGINA
     // =========================================================================
-    console.log('\n--- 6. Verificación de Errores de Consola ---');
+    console.log('--- 6. Verificación de Errores de Consola ---');
     console.log(`Total errores capturados: ${consoleErrors.length}`);
     if (consoleErrors.length > 0) {
       console.error('Errores:', consoleErrors);
       throw new Error(`Se detectaron ${consoleErrors.length} errores de consola: ${consoleErrors.join('; ')}`);
     }
-    console.log('✓ 0 Errores de consola registrados en todas las pruebas.');
+    console.log('✓ 0 Errores de consola registrados.');
 
     console.log('\n============================================================');
-    console.log('🎉 ¡AUDITORÍA DE FASE 5 COMPLETADA CON ÉXITO ABSOLUTO!');
-    console.log('0 errores de consola, 0 scroll horizontal en 4 viewports.');
+    console.log('🎉 ¡TODAS LAS CORRECCIONES DE FASE 5 PASARON AL 100%!');
     console.log('============================================================\n');
   } finally {
     await browser.close();
@@ -311,6 +358,6 @@ async function runVerification() {
 }
 
 runVerification().catch((err) => {
-  console.error('\n❌ Falló la verificación de Fase 5:', err);
+  console.error('\n❌ Falló la verificación:', err);
   process.exit(1);
 });

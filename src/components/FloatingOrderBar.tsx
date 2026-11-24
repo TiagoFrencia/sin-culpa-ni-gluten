@@ -36,7 +36,7 @@ export function FloatingOrderBar() {
                   </span>
                   <span
                     data-testid="floating-order-subtotal"
-                    className="font-serif italic font-bold text-lg sm:text-xl text-cream-50 tracking-tight"
+                    className="font-sans font-bold tabular-nums text-base sm:text-lg text-cream-50 tracking-tight"
                   >
                     {formatPriceARS(subtotal)}
                   </span>

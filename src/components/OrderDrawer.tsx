@@ -184,6 +184,7 @@ export function OrderDrawer() {
                             alt={item.name}
                             fallbackTitle={item.name}
                             aspectRatioClass="aspect-square"
+                            compact
                           />
                         </div>
 
@@ -194,7 +195,9 @@ export function OrderDrawer() {
                           </h4>
 
                           <p className="text-xs text-ink-600 leading-tight mt-0.5">
-                            {item.variantLabel}
+                            {item.type === 'combo' || item.variantLabel === 'Combo'
+                              ? 'Pack combo'
+                              : item.variantLabel}
                             {item.flavor && (
                               <span className="font-medium text-terracotta-600 ml-1">
                                 • {item.flavor}
@@ -241,12 +244,14 @@ export function OrderDrawer() {
 
                         {/* Subtotal por línea */}
                         <div className="text-right shrink-0">
-                          <span className="font-serif italic font-bold text-sm sm:text-base text-ink-900 block">
+                          <span className="font-sans font-semibold tabular-nums text-sm sm:text-base text-ink-900 block">
                             {formatPriceARS(itemTotal)}
                           </span>
-                          <span className="text-[10px] text-ink-600/80 block">
-                            {formatPriceARS(item.unitPrice)} c/u
-                          </span>
+                          {item.quantity > 1 && (
+                            <span className="text-[10px] font-sans tabular-nums text-ink-600/80 block">
+                              {formatPriceARS(item.unitPrice)} c/u
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
@@ -364,12 +369,12 @@ export function OrderDrawer() {
 
         {/* Footer Fijo en la parte inferior del Drawer */}
         {!isEmpty && (
-          <footer className="p-4 sm:p-5 border-t border-cream-200 bg-cream-100/90 shadow-lg space-y-3 shrink-0">
+          <footer className="p-3.5 sm:p-4 border-t border-cream-200 bg-cream-100/95 shadow-lg space-y-2.5 shrink-0">
             {/* Resumen de costos */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-ink-600">
                 <span>Subtotal ({totalItems} {totalItems === 1 ? 'producto' : 'productos'})</span>
-                <span className="font-semibold text-ink-900">{formatPriceARS(subtotal)}</span>
+                <span className="font-sans font-semibold tabular-nums text-ink-900">{formatPriceARS(subtotal)}</span>
               </div>
 
               <div className="flex items-center justify-between text-xs">
@@ -386,7 +391,7 @@ export function OrderDrawer() {
                 <span className="font-serif italic font-bold text-base text-ink-900">
                   Total estimado
                 </span>
-                <span className="font-serif italic font-bold text-2xl text-terracotta-700">
+                <span className="font-sans font-bold tabular-nums text-xl sm:text-2xl text-terracotta-700">
                   {formatPriceARS(subtotal)}
                 </span>
               </div>
@@ -403,7 +408,7 @@ export function OrderDrawer() {
               target="_blank"
               rel="noopener noreferrer"
               data-testid="whatsapp-order-cta"
-              className="w-full inline-flex items-center justify-center gap-2 bg-terracotta-600 hover:bg-terracotta-700 text-cream-50 font-semibold py-3.5 px-4 rounded-full text-sm sm:text-base shadow-md hover:shadow-lg transition-all active:scale-98 text-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-terracotta-600"
+              className="w-full inline-flex items-center justify-center gap-2 bg-terracotta-600 hover:bg-terracotta-700 text-cream-50 font-semibold py-3 sm:py-3.5 px-4 rounded-full text-sm sm:text-base shadow-md hover:shadow-lg transition-all active:scale-98 text-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-terracotta-600"
             >
               <MessageCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
               <span>Enviar pedido por WhatsApp</span>

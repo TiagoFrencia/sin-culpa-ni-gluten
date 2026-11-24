@@ -127,16 +127,17 @@ export function StorySection() {
                   className="group-hover:scale-102 transition-transform duration-700 ease-out"
                 />
 
-                {/* Sello de Confianza Flotante */}
-                <div className="absolute top-3.5 left-3.5 z-20 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sintacc-red text-white text-xs font-bold tracking-wide shadow-md">
-                  <ShieldCheck className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
-                  <span>100% Sin TACC</span>
-                </div>
+                {/* Contenedor de Badges Flotantes Responsivo */}
+                <div className="absolute top-3.5 left-3.5 right-3.5 z-20 flex flex-wrap items-center justify-between gap-1.5 pointer-events-none">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sintacc-red text-white text-xs font-bold tracking-wide shadow-md whitespace-nowrap">
+                    <ShieldCheck className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+                    <span>100% Sin TACC</span>
+                  </div>
 
-                {/* Badge de Elaboración Familiar */}
-                <div className="absolute top-3.5 right-3.5 z-20 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-espresso-950/80 backdrop-blur-md border border-cream-200/20 text-cream-50 text-xs font-medium shadow-md">
-                  <Heart className="w-3.5 h-3.5 text-terracotta-600 fill-terracotta-600" aria-hidden="true" />
-                  <span>Río Cuarto, Cba.</span>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-espresso-950/85 backdrop-blur-md border border-cream-200/20 text-cream-50 text-xs font-medium shadow-md whitespace-nowrap">
+                    <Heart className="w-3.5 h-3.5 text-terracotta-600 fill-terracotta-600" aria-hidden="true" />
+                    <span>Río Cuarto, Cba.</span>
+                  </div>
                 </div>
 
                 {/* Franja de Pie de Foto Editorial */}

@@ -64,8 +64,8 @@ export function Navbar() {
       aria-label="Navegación principal"
       className={`sticky top-0 z-40 transition-all duration-300 ${
         isScrolled
-          ? 'bg-cream-100/95 backdrop-blur-md border-b border-cream-200 shadow-xs py-3'
-          : 'bg-transparent border-b border-transparent py-4 sm:py-5'
+          ? 'bg-cream-100/95 backdrop-blur-md border-b border-cream-200 shadow-xs py-2 sm:py-3'
+          : 'bg-transparent border-b border-transparent py-2.5 sm:py-4'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -98,7 +98,7 @@ export function Navbar() {
             {/* Texto de Marca */}
             <div className="flex flex-col">
               <span
-                className={`font-serif text-lg sm:text-xl font-bold tracking-tight leading-tight transition-colors duration-200 ${
+                className={`font-serif text-base sm:text-lg font-bold tracking-tight leading-tight whitespace-nowrap transition-colors duration-200 ${
                   isScrolled
                     ? 'text-ink-900 group-hover:text-terracotta-600'
                     : 'text-cream-50 group-hover:text-cream-200'
@@ -107,7 +107,7 @@ export function Navbar() {
                 {BUSINESS_CONFIG.brandName}
               </span>
               <span
-                className={`text-[10px] tracking-widest uppercase font-sans font-semibold transition-colors duration-200 ${
+                className={`hidden sm:inline-block text-[10px] tracking-widest uppercase font-sans font-semibold transition-colors duration-200 ${
                   isScrolled ? 'text-ink-600' : 'text-cream-200/80'
                 }`}
               >
@@ -167,11 +167,10 @@ export function Navbar() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Consultar por WhatsApp"
-              className="inline-flex items-center gap-2 bg-terracotta-600 hover:bg-terracotta-700 text-cream-50 text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-full shadow-xs transition-all active:scale-95 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-terracotta-600 focus-visible:ring-offset-2"
+              className="hidden sm:inline-flex items-center gap-2 bg-terracotta-600 hover:bg-terracotta-700 text-cream-50 text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-full shadow-xs transition-all active:scale-95 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-terracotta-600 focus-visible:ring-offset-2"
             >
               <MessageCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span className="hidden sm:inline">Pedir por WhatsApp</span>
-              <span className="sm:hidden">WhatsApp</span>
+              <span>Pedir por WhatsApp</span>
             </a>
 
             {/* Botón Hamburguesa Móvil */}

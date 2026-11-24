@@ -151,7 +151,7 @@ export function CombosSection({ onAddCombo }: CombosSectionProps) {
                   <div className="pt-4 flex items-baseline justify-between gap-2">
                     <div>
                       <span className="text-xs text-cream-200/70 block">Precio final</span>
-                      <span className="font-serif italic font-bold text-3xl sm:text-4xl text-cream-50">
+                      <span className="font-sans font-bold tabular-nums text-2xl sm:text-3xl text-cream-50 tracking-tight">
                         {priceLabel}
                       </span>
                     </div>

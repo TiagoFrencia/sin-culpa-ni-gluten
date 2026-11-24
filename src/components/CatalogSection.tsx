@@ -207,7 +207,7 @@ function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
                 : selectedVariant.label}
             </span>
             {selectedVariant.price !== null ? (
-              <span className="font-serif italic font-bold text-2xl sm:text-3xl text-ink-900 leading-tight">
+              <span className="font-sans font-bold tabular-nums text-xl sm:text-2xl text-ink-900 leading-tight">
                 {formatPriceARS(selectedVariant.price)}
               </span>
             ) : (
