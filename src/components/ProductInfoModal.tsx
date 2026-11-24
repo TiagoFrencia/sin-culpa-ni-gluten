@@ -104,10 +104,10 @@ export function ProductInfoModal({ product, onClose }: ProductInfoModalProps) {
                 {categoryName}
               </span>
 
-              {/* Badge oficial Sin TACC sutil */}
+              {/* Badge oficial Sin Gluten sutil */}
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sintacc-red/10 text-sintacc-red border border-sintacc-red/20">
                 <span className="w-2 h-2 rounded-full bg-sintacc-red" aria-hidden="true" />
-                <span>100% Sin TACC</span>
+                <span>100% Sin Gluten</span>
               </span>
             </div>
 

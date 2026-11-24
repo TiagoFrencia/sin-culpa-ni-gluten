@@ -112,7 +112,7 @@ export function Navbar() {
                   isScrolled ? 'text-ink-600' : 'text-cream-200/80'
                 }`}
               >
-                100% Sin TACC • Río Cuarto
+                100% Sin Gluten • Río Cuarto
               </span>
             </div>
           </a>
@@ -230,7 +230,7 @@ export function Navbar() {
                     {business.brandName}
                   </p>
                   <p className="text-[10px] tracking-widest uppercase font-semibold text-ink-600">
-                    100% Sin TACC • Río Cuarto
+                    100% Sin Gluten • Río Cuarto
                   </p>
                 </div>
               </div>

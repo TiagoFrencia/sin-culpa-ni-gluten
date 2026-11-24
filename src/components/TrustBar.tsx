@@ -15,7 +15,7 @@ export function TrustBar() {
       icon: ShieldCheck,
       iconColor: 'text-olive-600',
       bgColor: 'bg-olive-600/10 border-olive-600/20',
-      title: 'Cocina 100% Sin TACC',
+      title: 'Cocina 100% Sin Gluten',
       description: '0% riesgo de contaminación cruzada',
     },
     {

@@ -106,10 +106,10 @@ export function CombosSection({ onAddCombo }: CombosSectionProps) {
                       </div>
                     )}
 
-                    {/* Sello Sin TACC */}
+                    {/* Sello Sin Gluten */}
                     <div className="absolute top-3 right-3">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-espresso-950/85 text-cream-100 border border-cream-200/20 backdrop-blur-xs">
-                        Sin TACC
+                        Sin Gluten
                       </span>
                     </div>
                   </div>

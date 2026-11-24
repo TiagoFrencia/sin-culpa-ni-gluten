@@ -53,7 +53,7 @@ function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
   const itemKey = buildOrderItemKey(product.id, selectedVariant.id, selectedFlavor);
   const currentQuantity = getItemQuantity(itemKey);
 
-  const categoryLabel = CATEGORY_LABELS[product.category] || 'Sin TACC';
+  const categoryLabel = CATEGORY_LABELS[product.category] || 'Sin Gluten';
 
   const handleAdd = () => {
     if (selectedVariant.price === null) return;
@@ -111,10 +111,10 @@ function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
             </div>
           )}
 
-          {/* Etiqueta discreta Sin TACC */}
+          {/* Etiqueta discreta Sin Gluten */}
           <div className="absolute top-3 right-3">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-cream-50/90 text-sintacc-red border border-sintacc-red/20 shadow-2xs backdrop-blur-xs">
-              Sin TACC
+              Sin Gluten
             </span>
           </div>
 
@@ -413,7 +413,7 @@ export function CatalogSection({ onAddToCart }: CatalogSectionProps) {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-12 border-b border-cream-200 pb-6 sm:pb-8">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-terracotta-600 block mb-1">
-            Carta Completa Sin TACC
+            Carta Completa Sin Gluten
           </span>
           <h2 className="font-serif italic font-bold text-3xl sm:text-4xl lg:text-5xl text-ink-900 tracking-tight">
             Explorá todo el menú

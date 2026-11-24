@@ -15,7 +15,7 @@ export function MediaImage({
   className = '',
   aspectRatioClass = 'aspect-4/3',
   fallbackTitle,
-  categoryLabel = 'Sin TACC • Artesanal',
+  categoryLabel = 'Sin Gluten • Artesanal',
   containerClassName = '',
   compact = false,
   loading = 'lazy',

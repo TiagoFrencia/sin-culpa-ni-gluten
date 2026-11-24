@@ -29,14 +29,14 @@ export function Hero() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* Columna izquierda: Narrativa Editorial y Acciones */}
           <div className="lg:col-span-7 flex flex-col items-start space-y-6 sm:space-y-7 z-10">
-            {/* Eyebrow badge discreto con sello Sin TACC */}
+            {/* Eyebrow badge discreto con sello Sin Gluten */}
             <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-espresso-900/90 border border-cream-200/20 backdrop-blur-xs text-xs sm:text-sm font-medium text-cream-100 shadow-xs">
               <span
                 className="flex items-center justify-center w-5 h-5 rounded-full bg-sintacc-red text-white text-[10px] font-black shrink-0 tracking-tighter shadow-xs"
-                title="Sello Oficial Sin TACC"
-                aria-label="Sello Sin TACC"
+                title="Sello Oficial Sin Gluten"
+                aria-label="Sello Sin Gluten"
               >
-                ST
+                SG
               </span>
               <span>100% Libre de Gluten • Río Cuarto</span>
             </div>
@@ -93,7 +93,7 @@ export function Hero() {
               <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-cream-200/15 shadow-2xl shadow-black/80 bg-espresso-900 group">
                 <MediaImage
                   src="/images/empanadas-arabes.webp"
-                  alt="Empanadas Árabes caseras 100% Sin TACC"
+                  alt="Empanadas Árabes caseras 100% Sin Gluten"
                   aspectRatioClass="aspect-4/3 sm:aspect-5/4 lg:aspect-4/3"
                   fallbackTitle="Empanadas Árabes Artesanales"
                   categoryLabel="Especialidad de la casa"
@@ -125,7 +125,7 @@ export function Hero() {
                   </div>
 
                   <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-1 rounded-md bg-olive-600/30 text-cream-100 border border-olive-600/40 shrink-0">
-                    Sin TACC
+                    Sin Gluten
                   </span>
                 </div>
               </div>

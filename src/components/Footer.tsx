@@ -36,7 +36,7 @@ export function Footer() {
   const navLinks = [
     { label: 'Combos para Freezer', href: '#combos' },
     { label: 'Menú Completo', href: '#menu' },
-    { label: 'Cocina Segura Sin TACC', href: '#cocina-segura' },
+    { label: 'Cocina Segura Sin Gluten', href: '#cocina-segura' },
     { label: 'Preguntas Frecuentes', href: '#faq' },
   ];
 
@@ -160,7 +160,7 @@ export function Footer() {
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-olive-600 shrink-0" aria-hidden="true" />
             <p>
-              © {CURRENT_YEAR} {business.brandName} • Elaboración casera 100% Sin TACC • Imágenes ilustrativas.
+              © {CURRENT_YEAR} {business.brandName} • Elaboración casera 100% Sin Gluten • Imágenes ilustrativas.
             </p>
           </div>
 

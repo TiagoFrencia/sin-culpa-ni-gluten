@@ -2,7 +2,7 @@
 
 ## 1. Resumen Ejecutivo
 - **Negocio:** Sin Culpa Ni Gluten (@sinculpa.nigluten)
-- **Rubro:** Comidas caseras congeladas 100% Sin TACC / Libres de Gluten
+- **Rubro:** Comidas caseras congeladas 100% Sin Gluten / Libres de Gluten
 - **Ubicación:** Río Cuarto, Córdoba, Argentina
 - **Teléfono de contacto / WhatsApp:** `+54 9 358 572-8550` (Display: `358 572-8550`)
 - **Propuesta de Valor:** "Comer rico y sin gluten ya no es un problema." Platos caseros, seguros, sin contaminación cruzada, congelados al vacío o envasados para conservar frescura y sabor artesanal.

@@ -47,7 +47,7 @@ export async function exportPriceListFlyer(
   ctx.textAlign = 'center';
   ctx.fillStyle = '#A64B2A';
   ctx.font = 'bold 20px "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillText('100% LIBRE DE GLUTEN • COCINA SEGURA SIN TACC', 540, 95);
+  ctx.fillText('100% LIBRE DE GLUTEN • COCINA SEGURA SIN GLUTEN', 540, 95);
 
   // Título Principal
   ctx.fillStyle = '#1D120D';

@@ -40,7 +40,7 @@ export const products: Product[] = [
     id: 'milanesas-cuadrada',
     name: 'Milanesas de Ternera (Cuadrada)',
     category: 'milanesas',
-    shortDescription: 'Milanesas caseras de pulpa cuadrada seleccionada con rebozado crocante sin TACC.',
+    shortDescription: 'Milanesas caseras de pulpa cuadrada seleccionada con rebozado crocante sin gluten.',
     image: '/images/milanesas-cuadrada.webp',
     variants: [
       { id: '1kg', label: '1 kg', price: 21500 },
@@ -89,7 +89,7 @@ export const products: Product[] = [
     id: 'hamburguesas-carne',
     name: 'Hamburguesas 100% Carne Especial',
     category: 'hamburguesas',
-    shortDescription: 'Medallones artesanales de pura carne vacuna condimentada sin conservantes ni TACC.',
+    shortDescription: 'Medallones artesanales de pura carne vacuna condimentada sin conservantes ni gluten.',
     image: '/images/hamburguesas-carne.webp',
     variants: [
       { id: '1kg', label: '1 kg', price: 20500 },
@@ -116,12 +116,12 @@ export const products: Product[] = [
     available: true,
   },
 
-  // --- EMPANADAS SIN TACC (con variantes) ---
+  // --- EMPANADAS SIN GLUTEN (con variantes) ---
   {
     id: 'empanadas-arabes',
-    name: 'Empanadas Árabes Sin TACC',
+    name: 'Empanadas Árabes Sin Gluten',
     category: 'empanadas',
-    shortDescription: 'Masa artesanal sin TACC rellena de carne picada sazonada con limón y especias tradicionales.',
+    shortDescription: 'Masa artesanal sin gluten rellena de carne picada sazonada con limón y especias tradicionales.',
     image: '/images/empanadas-arabes.webp',
     variants: [
       { id: 'media-docena', label: 'Media docena (6 u.)', price: 12000 },
@@ -155,7 +155,7 @@ export const products: Product[] = [
     id: 'pizza-especial',
     name: 'Pizza Especial Congelada',
     category: 'pizzas',
-    shortDescription: 'Masa esponjosa sin TACC, salsa casera de tomate, abundante muzzarella, jamón cocido y morrones.',
+    shortDescription: 'Masa esponjosa sin gluten, salsa casera de tomate, abundante muzzarella, jamón cocido y morrones.',
     image: '/images/pizza-especial.webp',
     variants: [
       { id: 'grande-8-porciones', label: 'Grande (8 porciones)', price: 13000 },
@@ -183,7 +183,7 @@ export const products: Product[] = [
     id: 'prepizza-salsa',
     name: 'Prepizza con Salsa',
     category: 'pizzas',
-    shortDescription: 'Base de pizza precocida sin TACC lista para armar con tus ingredientes favoritos.',
+    shortDescription: 'Base de pizza precocida sin gluten lista para armar con tus ingredientes favoritos.',
     image: '/images/prepizza-salsa.webp',
     variants: [
       { id: 'unidad', label: 'Unidad grande', price: 6000 },
@@ -197,7 +197,7 @@ export const products: Product[] = [
   // --- PANADERÍA Y PLATOS ESPECIALES (price: null -> Consultar precio) ---
   {
     id: 'pan-integral',
-    name: 'Pan Integral Sin TACC con Semillas',
+    name: 'Pan Integral Sin Gluten con Semillas',
     category: 'panaderia',
     shortDescription: 'Pan de molde artesanal sin gluten enriquecido con semillas de girasol, lino y chía.',
     image: '/images/pan-integral.webp',
@@ -248,7 +248,7 @@ export const combos: Combo[] = [
     name: 'Combo Juntada Sin Culpa',
     subtitle: 'La opción perfecta para compartir con amigos o familia sin preocupaciones.',
     itemsIncluded: [
-      '1 Docena Empanadas Árabes Sin TACC',
+      '1 Docena Empanadas Árabes Sin Gluten',
       '1 Pizza Especial Congelada',
       '1 Pizza de Muzzarella Congelada',
     ],

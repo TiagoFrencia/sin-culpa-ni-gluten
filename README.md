@@ -121,12 +121,12 @@ Todas las fotografías de platos deben utilizar formato moderno **WebP** y propo
 | `hamburguesas-carne-verdura.webp` | `public/images/hamburguesas-carne-verdura.webp` | 4:3 | 800x600 o 1200x900 px | Hamburguesas 50% Carne / 50% Verdura |
 | `hamburguesas-carne.webp` | `public/images/hamburguesas-carne.webp` | 4:3 | 800x600 o 1200x900 px | Hamburguesas 100% Carne Especial |
 | `hamburguesas-pollo.webp` | `public/images/hamburguesas-pollo.webp` | 4:3 | 800x600 o 1200x900 px | Hamburguesas Caseras de Pollo |
-| `empanadas-arabes.webp` | `public/images/empanadas-arabes.webp` | 4:3 | 800x600 o 1200x900 px | Empanadas Árabes Sin TACC (Especialidad Hero) |
+| `empanadas-arabes.webp` | `public/images/empanadas-arabes.webp` | 4:3 | 800x600 o 1200x900 px | Empanadas Árabes Sin Gluten (Especialidad Hero) |
 | `empanadas-clasicas.webp` | `public/images/empanadas-clasicas.webp` | 4:3 | 800x600 o 1200x900 px | Empanadas Caseras Dulces y Saladas |
 | `pizza-especial.webp` | `public/images/pizza-especial.webp` | 4:3 | 800x600 o 1200x900 px | Pizza Especial Congelada |
 | `pizza-muzzarella.webp` | `public/images/pizza-muzzarella.webp` | 4:3 | 800x600 o 1200x900 px | Pizza de Muzzarella Congelada |
 | `prepizza-salsa.webp` | `public/images/prepizza-salsa.webp` | 4:3 | 800x600 o 1200x900 px | Prepizza con Salsa |
-| `pan-integral.webp` | `public/images/pan-integral.webp` | 4:3 | 800x600 o 1200x900 px | Pan Integral Sin TACC con Semillas |
+| `pan-integral.webp` | `public/images/pan-integral.webp` | 4:3 | 800x600 o 1200x900 px | Pan Integral Sin Gluten con Semillas |
 | `pollo-relleno.webp` | `public/images/pollo-relleno.webp` | 4:3 | 800x600 o 1200x900 px | Roulet y Pollo Relleno por Encargo |
 
 ---

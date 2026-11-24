@@ -17,7 +17,7 @@ export function FaqSection() {
     {
       question: '¿Existe algún riesgo de contaminación cruzada?',
       answer:
-        'Cero riesgo. Toda nuestra cocina es 100% libre de gluten desde hace 3 años a raíz del diagnóstico de celiaquía en nuestra familia. No entran harinas con gluten ni se comparten utensilios o superficies. Además, trabajamos exclusivamente con insumos y materias primas certificadas con sello oficial Sin TACC.',
+        'Cero riesgo. Toda nuestra cocina es 100% libre de gluten desde hace 3 años a raíz del diagnóstico de celiaquía en nuestra familia. No entran harinas con gluten ni se comparten utensilios o superficies. Además, trabajamos exclusivamente con insumos y materias primas certificadas con sello oficial Sin Gluten.',
       tag: 'Seguridad Celíaca',
     },
     {

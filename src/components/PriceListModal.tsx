@@ -39,7 +39,7 @@ function generatePlainTextList(
   const activeCombos = combos.filter((c) => c.available !== false);
 
   let text = `🌱 ${business.brandName} - Lista Oficial de Precios\n`;
-  text += `100% Libre de Gluten / Sin TACC • ${business.city}\n`;
+  text += `100% Libre de Gluten / Sin Gluten • ${business.city}\n`;
   text += `¡Envío a domicilio sin cargo en Río Cuarto!\n\n`;
 
   for (const sec of CATEGORY_SECTIONS) {
@@ -151,7 +151,7 @@ export function PriceListModal({ isOpen, onClose }: PriceListModalProps) {
   const handleShare = async () => {
     const shareData = {
       title: `Lista de Precios - ${business.brandName}`,
-      text: `Mirá la lista de precios en vivo de comidas caseras 100% Sin TACC de ${business.brandName} (${business.city}):`,
+      text: `Mirá la lista de precios en vivo de comidas caseras 100% Sin Gluten de ${business.brandName} (${business.city}):`,
       url: window.location.href,
     };
 
@@ -206,7 +206,7 @@ export function PriceListModal({ isOpen, onClose }: PriceListModalProps) {
                 Carta y Lista de Precios en Vivo
               </h2>
               <p className="text-[11px] text-ink-600 truncate">
-                100% Sin TACC • Elaboración casera en {business.city}
+                100% Sin Gluten • Elaboración casera en {business.city}
               </p>
             </div>
           </div>

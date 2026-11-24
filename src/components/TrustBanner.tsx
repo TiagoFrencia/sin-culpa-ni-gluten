@@ -26,7 +26,7 @@ export function TrustBanner() {
 
         {/* Bajada empática y clara */}
         <p className="font-sans text-sm sm:text-base lg:text-lg text-ink-600 max-w-2xl mx-auto leading-relaxed">
-          Cada elaboración se prepara en un hogar exclusivo Sin TACC con ingredientes certificados,
+          Cada elaboración se prepara en un hogar exclusivo Sin Gluten con ingredientes certificados,
           para que comas rico y seguro todos los días.
         </p>
 

@@ -8,7 +8,7 @@ import { updateActiveWhatsAppPhone } from '@/utils/whatsapp';
 
 export { useCatalog } from './useCatalog';
 
-const CACHE_KEY = 'scng_catalog_cache_v1';
+const CACHE_KEY = 'scng_catalog_cache_v2';
 
 interface CatalogCacheData {
   products: Product[];

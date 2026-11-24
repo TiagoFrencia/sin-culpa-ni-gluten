@@ -42,8 +42,8 @@ function validateJsonLd() {
   if (!Array.isArray(data['@type']) || !data['@type'].includes('FoodEstablishment')) {
     throw new Error(`@type debe incluir FoodEstablishment: ${JSON.stringify(data['@type'])}`);
   }
-  if (!Array.isArray(data.servesCuisine) || !data.servesCuisine.includes('Sin TACC')) {
-    throw new Error(`servesCuisine debe incluir 'Sin TACC'`);
+  if (!Array.isArray(data.servesCuisine) || !data.servesCuisine.includes('Sin Gluten')) {
+    throw new Error(`servesCuisine debe incluir 'Sin Gluten'`);
   }
   if (data.telephone !== '+54-9-358-572-8550') {
     throw new Error(`telephone incorrecto: ${data.telephone}`);

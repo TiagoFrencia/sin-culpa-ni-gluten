@@ -10,7 +10,7 @@ export function StorySection() {
   const guarantees = [
     {
       icon: ShieldCheck,
-      title: 'Hogar exclusivo Sin TACC',
+      title: 'Hogar exclusivo Sin Gluten',
       description: 'Cero harinas con gluten en el espacio de elaboración. Sin riesgos de contaminación cruzada.',
       color: 'text-olive-600',
       bgColor: 'bg-olive-600/10',
@@ -19,7 +19,7 @@ export function StorySection() {
     {
       icon: Sparkles,
       title: 'Materias primas certificadas',
-      description: 'Insumos seleccionados con sello oficial Sin TACC y trazabilidad garantizada desde el origen.',
+      description: 'Insumos seleccionados con sello oficial Sin Gluten y trazabilidad garantizada desde el origen.',
       color: 'text-terracotta-600',
       bgColor: 'bg-terracotta-600/10',
       borderColor: 'border-terracotta-600/20',
@@ -123,7 +123,7 @@ export function StorySection() {
                   alt="Pan casero integral libre de gluten recién elaborado en Río Cuarto"
                   aspectRatioClass="aspect-4/3 sm:aspect-16/10 lg:aspect-4/3"
                   fallbackTitle="Pan Casero Libre de Gluten"
-                  categoryLabel="Cocina 100% Sin TACC • Río Cuarto"
+                  categoryLabel="Cocina 100% Sin Gluten • Río Cuarto"
                   className="group-hover:scale-102 transition-transform duration-700 ease-out"
                 />
 
@@ -131,7 +131,7 @@ export function StorySection() {
                 <div className="absolute top-3.5 left-3.5 right-3.5 z-20 flex flex-wrap items-center justify-between gap-1.5 pointer-events-none">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sintacc-red text-white text-xs font-bold tracking-wide shadow-md whitespace-nowrap">
                     <ShieldCheck className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
-                    <span>100% Sin TACC</span>
+                    <span>100% Sin Gluten</span>
                   </div>
 
                   <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-espresso-950/85 backdrop-blur-md border border-cream-200/20 text-cream-50 text-xs font-medium shadow-md whitespace-nowrap">
