@@ -11,7 +11,7 @@ import {
   AlertCircle,
   Sparkles,
 } from 'lucide-react';
-import { PRODUCTS, CATEGORY_LABELS } from '@/data/catalog';
+import { CATEGORY_LABELS } from '@/data/catalog';
 import type { Product, ProductCategory, ProductVariant } from '@/types/catalog';
 import { formatPriceARS } from '@/config/business';
 import { MediaImage } from '@/components/MediaImage';
@@ -19,6 +19,7 @@ import { buildDirectProductUrl, buildHalfKgInquiryUrl } from '@/utils/whatsapp';
 import { ProductInfoModal } from '@/components/ProductInfoModal';
 import { PriceListModal } from '@/components/PriceListModal';
 import { useOrder } from '@/context/OrderContext';
+import { useCatalog } from '@/context/CatalogContext';
 import { buildOrderItemKey } from '@/types/order';
 
 interface CatalogSectionProps {
@@ -32,11 +33,20 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(
+    product.variants?.[0]?.id || 'default'
+  );
   const [selectedFlavor, setSelectedFlavor] = useState<string | undefined>(
     product.flavorOptions?.[0]
   );
   const [isRecentlyAdded, setIsRecentlyAdded] = useState(false);
+
+  const selectedVariant: ProductVariant = useMemo(() => {
+    return (
+      product.variants?.find((v) => v.id === selectedVariantId) ||
+      product.variants?.[0] || { id: 'default', label: 'Unidad', price: null }
+    );
+  }, [product.variants, selectedVariantId]);
 
   const { addItem, incrementItem, decrementItem, getItemQuantity } = useOrder();
 
@@ -151,7 +161,7 @@ function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
                       type="button"
                       role="radio"
                       aria-checked={isSelected}
-                      onClick={() => setSelectedVariant(v)}
+                      onClick={() => setSelectedVariantId(v.id)}
                       className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-150 text-center ${
                         isSelected
                           ? 'bg-cream-50 text-ink-900 shadow-2xs border border-cream-200/60'
@@ -341,23 +351,37 @@ function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
 }
 
 export function CatalogSection({ onAddToCart }: CatalogSectionProps) {
+  const { products } = useCatalog();
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isPriceListOpen, setIsPriceListOpen] = useState<boolean>(false);
   const [selectedProductForInfo, setSelectedProductForInfo] = useState<Product | null>(null);
 
-  // Lista de categorías para las pestañas
+  // Lista de categorías maestras
   const categoryKeys = useMemo(
     () => Object.keys(CATEGORY_LABELS) as ProductCategory[],
     []
   );
 
-  // Filtrado de productos por categoría y búsqueda
-  const filteredProducts = useMemo(() => {
-    let list = PRODUCTS;
+  // Regla anti-rompimiento: calcular solo las categorías que tienen al menos un producto disponible
+  const activeCategories = useMemo(() => {
+    return categoryKeys.filter((catKey) =>
+      products.some((p) => p.category === catKey && p.available !== false)
+    );
+  }, [categoryKeys, products]);
 
-    if (selectedCategory !== 'todos') {
-      list = list.filter((p) => p.category === selectedCategory);
+  // Categoría efectiva calculada declarativamente (si una categoría queda vacía, cae a 'todos')
+  const currentCategory =
+    selectedCategory !== 'todos' && !activeCategories.includes(selectedCategory as ProductCategory)
+      ? 'todos'
+      : selectedCategory;
+
+  // Filtrado de productos disponibles por categoría y búsqueda
+  const filteredProducts = useMemo(() => {
+    let list = products.filter((p) => p.available !== false);
+
+    if (currentCategory !== 'todos') {
+      list = list.filter((p) => p.category === currentCategory);
     }
 
     if (searchQuery.trim() !== '') {
@@ -372,7 +396,12 @@ export function CatalogSection({ onAddToCart }: CatalogSectionProps) {
     }
 
     return list;
-  }, [selectedCategory, searchQuery]);
+  }, [products, currentCategory, searchQuery]);
+
+  const totalAvailableCount = useMemo(
+    () => products.filter((p) => p.available !== false).length,
+    [products]
+  );
 
   return (
     <section
@@ -417,18 +446,18 @@ export function CatalogSection({ onAddToCart }: CatalogSectionProps) {
               type="button"
               onClick={() => setSelectedCategory('todos')}
               className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-xs sm:text-sm transition-all duration-150 ${
-                selectedCategory === 'todos'
+                currentCategory === 'todos'
                   ? 'bg-ink-900 text-cream-50 font-semibold shadow-xs'
                   : 'bg-cream-50 text-ink-600 hover:text-ink-900 hover:bg-cream-100 border border-cream-200'
               }`}
             >
-              Todos ({PRODUCTS.length})
+              Todos ({totalAvailableCount})
             </button>
 
-            {categoryKeys.map((catKey) => {
-              const isSelected = selectedCategory === catKey;
+            {activeCategories.map((catKey) => {
+              const isSelected = currentCategory === catKey;
               const label = CATEGORY_LABELS[catKey];
-              const count = PRODUCTS.filter((p) => p.category === catKey).length;
+              const count = products.filter((p) => p.category === catKey && p.available !== false).length;
 
               return (
                 <button

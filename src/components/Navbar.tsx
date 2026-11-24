@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Menu, X, MessageCircle, ArrowRight, ShieldCheck, ShoppingBag } from 'lucide-react';
-import { BUSINESS_CONFIG } from '@/config/business';
 import { buildGeneralInquiryUrl } from '@/utils/whatsapp';
 import { useOrder } from '@/context/OrderContext';
+import { useCatalog } from '@/context/CatalogContext';
 
 export function Navbar() {
+  const { business } = useCatalog();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -57,7 +58,7 @@ export function Navbar() {
     { label: 'Preguntas', href: '#faq' },
   ];
 
-  const whatsappUrl = buildGeneralInquiryUrl();
+  const whatsappUrl = buildGeneralInquiryUrl(undefined, business.whatsappPhone);
 
   return (
     <nav
@@ -104,7 +105,7 @@ export function Navbar() {
                     : 'text-cream-50 group-hover:text-cream-200'
                 }`}
               >
-                {BUSINESS_CONFIG.brandName}
+                {business.brandName}
               </span>
               <span
                 className={`hidden sm:inline-block text-[10px] tracking-widest uppercase font-sans font-semibold transition-colors duration-200 ${
@@ -226,7 +227,7 @@ export function Navbar() {
                 </div>
                 <div>
                   <p className="font-serif font-bold text-ink-900 text-base leading-tight">
-                    {BUSINESS_CONFIG.brandName}
+                    {business.brandName}
                   </p>
                   <p className="text-[10px] tracking-widest uppercase font-semibold text-ink-600">
                     100% Sin TACC • Río Cuarto

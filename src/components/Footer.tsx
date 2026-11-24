@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MessageCircle, Truck, ShieldCheck, ArrowUp } from 'lucide-react';
-import { BUSINESS_CONFIG } from '@/config/business';
 import { buildGeneralInquiryUrl } from '@/utils/whatsapp';
+import { useCatalog } from '@/context/CatalogContext';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -25,8 +25,9 @@ function InstagramIcon({ className = 'w-4 h-4' }: { className?: string }) {
 }
 
 export function Footer() {
+  const { business } = useCatalog();
   const [logoError, setLogoError] = useState(false);
-  const whatsappUrl = buildGeneralInquiryUrl();
+  const whatsappUrl = buildGeneralInquiryUrl(undefined, business.whatsappPhone);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -61,7 +62,7 @@ export function Footer() {
                 {!logoError ? (
                   <img
                     src="/logo.png"
-                    alt={BUSINESS_CONFIG.brandName}
+                    alt={business.brandName}
                     width={48}
                     height={48}
                     loading="lazy"
@@ -78,7 +79,7 @@ export function Footer() {
 
               <div>
                 <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-cream-50 block leading-tight">
-                  {BUSINESS_CONFIG.brandName}
+                  {business.brandName}
                 </span>
                 <span className="text-[11px] font-sans font-semibold tracking-wider uppercase text-olive-600">
                   100% Libre de Gluten • Familiar
@@ -87,12 +88,12 @@ export function Footer() {
             </div>
 
             <p className="font-sans text-sm text-cream-200/80 leading-relaxed max-w-sm">
-              {BUSINESS_CONFIG.slogan} Comidas caseras pensadas para tener en el freezer y resolver tus días con sabor auténtico y seguridad celíaca absoluta.
+              {business.slogan} Comidas caseras pensadas para tener en el freezer y resolver tus días con sabor auténtico y seguridad celíaca absoluta.
             </p>
 
             <div className="flex items-center gap-2 text-xs text-cream-200/70 pt-1">
               <span className="w-2 h-2 rounded-full bg-olive-600 inline-block animate-pulse" />
-              <span>{BUSINESS_CONFIG.city}, {BUSINESS_CONFIG.country}</span>
+              <span>{business.city}, {business.country}</span>
             </div>
           </div>
 
@@ -125,7 +126,7 @@ export function Footer() {
             {/* Badge destacado de Envío Gratis */}
             <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-olive-600/20 border border-olive-600/30 text-xs font-semibold text-cream-50 shadow-2xs">
               <Truck className="w-4 h-4 text-olive-600 shrink-0" aria-hidden="true" />
-              <span>{BUSINESS_CONFIG.deliveryHighlight}</span>
+              <span>{business.deliveryHighlight}</span>
             </div>
 
             <div className="space-y-3 pt-1">
@@ -137,18 +138,18 @@ export function Footer() {
                 className="w-full inline-flex items-center justify-center gap-2 bg-terracotta-600 hover:bg-terracotta-700 text-cream-50 font-semibold px-4 py-2.5 rounded-full text-xs sm:text-sm transition-all active:scale-95 shadow-sm"
               >
                 <MessageCircle className="w-4 h-4" aria-hidden="true" />
-                <span>WhatsApp: {BUSINESS_CONFIG.whatsappDisplay}</span>
+                <span>WhatsApp: {business.whatsappDisplay}</span>
               </a>
 
               {/* Botón Instagram */}
               <a
-                href={BUSINESS_CONFIG.instagramUrl}
+                href={business.instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full inline-flex items-center justify-center gap-2 bg-espresso-900 hover:bg-espresso-900/80 text-cream-100 border border-cream-200/20 font-medium px-4 py-2.5 rounded-full text-xs sm:text-sm transition-all hover:border-terracotta-600/40"
               >
                 <InstagramIcon className="w-4 h-4 text-terracotta-600" />
-                <span>Instagram: {BUSINESS_CONFIG.instagramHandle}</span>
+                <span>Instagram: {business.instagramHandle}</span>
               </a>
             </div>
           </div>
@@ -159,7 +160,7 @@ export function Footer() {
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-olive-600 shrink-0" aria-hidden="true" />
             <p>
-              © {CURRENT_YEAR} {BUSINESS_CONFIG.brandName} • Elaboración casera 100% Sin TACC • Imágenes ilustrativas.
+              © {CURRENT_YEAR} {business.brandName} • Elaboración casera 100% Sin TACC • Imágenes ilustrativas.
             </p>
           </div>
 

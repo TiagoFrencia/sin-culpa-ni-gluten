@@ -26,6 +26,7 @@ export interface Product {
   featured: boolean;
   available: boolean;
   badge?: string;
+  sortOrder?: number;
 }
 
 export interface Combo {
@@ -38,4 +39,5 @@ export interface Combo {
   badge?: string;
   image: string;
   available: boolean;
+  sortOrder?: number;
 }

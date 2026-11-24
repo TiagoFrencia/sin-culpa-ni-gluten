@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Download, Share2, FileImage, MessageCircle, AlertCircle } from 'lucide-react';
 import { buildGeneralInquiryUrl } from '@/utils/whatsapp';
+import { useCatalog } from '@/context/CatalogContext';
 
 interface PriceListModalProps {
   isOpen: boolean;
@@ -8,9 +9,12 @@ interface PriceListModalProps {
 }
 
 export function PriceListModal({ isOpen, onClose }: PriceListModalProps) {
+  const { business } = useCatalog();
   const [imageError, setImageError] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  const priceListUrl = business.priceListImageUrl || '/images/lista-precios.jpg';
 
   useEffect(() => {
     if (!isOpen) return;
@@ -37,8 +41,8 @@ export function PriceListModal({ isOpen, onClose }: PriceListModalProps) {
 
   const handleShare = async () => {
     const shareData = {
-      title: 'Lista de Precios - Sin Culpa Ni Gluten',
-      text: 'Mirá la lista de precios de platos caseros 100% Sin TACC de Sin Culpa Ni Gluten (Río Cuarto):',
+      title: `Lista de Precios - ${business.brandName}`,
+      text: `Mirá la lista de precios de platos caseros 100% Sin TACC de ${business.brandName} (${business.city}):`,
       url: window.location.href,
     };
 
@@ -70,7 +74,8 @@ export function PriceListModal({ isOpen, onClose }: PriceListModalProps) {
   };
 
   const whatsappInquiryUrl = buildGeneralInquiryUrl(
-    '¡Hola! Quería consultar por la lista de precios actualizada de Sin Culpa Ni Gluten.'
+    `¡Hola! Quería consultar por la lista de precios actualizada de ${business.brandName}.`,
+    business.whatsappPhone
   );
 
   return (
@@ -124,8 +129,9 @@ export function PriceListModal({ isOpen, onClose }: PriceListModalProps) {
           {!imageError ? (
             <div className="relative rounded-xl overflow-hidden shadow-md border border-cream-200 bg-white max-w-full">
               <img
-                src="/images/lista-precios.jpg"
-                alt="Lista completa de precios de Sin Culpa Ni Gluten"
+                key={priceListUrl}
+                src={priceListUrl}
+                alt={`Lista completa de precios de ${business.brandName}`}
                 loading="lazy"
                 decoding="async"
                 className="w-full h-auto object-contain max-h-[60vh]"
@@ -174,7 +180,7 @@ export function PriceListModal({ isOpen, onClose }: PriceListModalProps) {
           <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end order-1 sm:order-2">
             {/* Botón Descargar lista */}
             <a
-              href="/images/lista-precios.jpg"
+              href={priceListUrl}
               download="lista-precios-sin-culpa-ni-gluten.jpg"
               className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 border border-cream-200 bg-cream-50 hover:bg-cream-100 text-ink-900 font-semibold px-4 py-2 rounded-full text-xs sm:text-sm transition-all shadow-2xs active:scale-95"
             >

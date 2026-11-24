@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Check, MessageCircle, ShoppingBag, Sparkles, Plus, Minus } from 'lucide-react';
-import { COMBOS } from '@/data/catalog';
 import type { Combo } from '@/types/catalog';
 import { formatPriceARS } from '@/config/business';
 import { MediaImage } from '@/components/MediaImage';
 import { buildComboInquiryUrl } from '@/utils/whatsapp';
 import { useOrder } from '@/context/OrderContext';
+import { useCatalog } from '@/context/CatalogContext';
 import { buildOrderItemKey } from '@/types/order';
 
 interface CombosSectionProps {
@@ -13,6 +13,7 @@ interface CombosSectionProps {
 }
 
 export function CombosSection({ onAddCombo }: CombosSectionProps) {
+  const { combos } = useCatalog();
   const [addedComboId, setAddedComboId] = useState<string | null>(null);
   const { addItem, incrementItem, decrementItem, getItemQuantity } = useOrder();
 
@@ -71,7 +72,7 @@ export function CombosSection({ onAddCombo }: CombosSectionProps) {
 
         {/* Grilla de 3 columnas en desktop, 1 columna en móvil */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch">
-          {COMBOS.map((combo) => {
+          {combos.filter((c) => c.available !== false).map((combo) => {
             const finalPrice = combo.promoPrice ?? combo.regularPrice;
             const priceLabel = formatPriceARS(finalPrice);
             const inquiryUrl = buildComboInquiryUrl(combo.name, priceLabel);

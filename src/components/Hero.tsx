@@ -1,11 +1,13 @@
 import { ArrowDown, MessageCircle, Check, Sparkles } from 'lucide-react';
-import { BUSINESS_CONFIG } from '@/config/business';
 import { buildGeneralInquiryUrl } from '@/utils/whatsapp';
 import { MediaImage } from '@/components/MediaImage';
+import { useCatalog } from '@/context/CatalogContext';
 
 export function Hero() {
+  const { business } = useCatalog();
   const whatsappUrl = buildGeneralInquiryUrl(
-    '¡Hola! Estuve viendo la web de Sin Culpa Ni Gluten y me gustaría consultar por los platos caseros congelados.'
+    `¡Hola! Estuve viendo la web de ${business.brandName} y me gustaría consultar por los platos caseros congelados.`,
+    business.whatsappPhone
   );
 
   return (
@@ -41,7 +43,7 @@ export function Hero() {
 
             {/* H1 Editorial de Alto Impacto */}
             <h1 className="font-serif italic font-semibold text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-cream-50 leading-[1.08] tracking-tight">
-              {BUSINESS_CONFIG.slogan}
+              {business.slogan}
             </h1>
 
             {/* Subtítulo claro, humano y empático */}
@@ -78,8 +80,8 @@ export function Hero() {
             <div className="flex items-center gap-2 text-xs sm:text-sm text-cream-200/75 pt-1">
               <Check className="w-4 h-4 text-olive-600 shrink-0" aria-hidden="true" />
               <span>
-                {BUSINESS_CONFIG.deliveryHighlight} • Atención por WhatsApp{' '}
-                <strong className="text-cream-100 font-semibold">{BUSINESS_CONFIG.whatsappDisplay}</strong>
+                {business.deliveryHighlight} • Atención por WhatsApp{' '}
+                <strong className="text-cream-100 font-semibold">{business.whatsappDisplay}</strong>
               </span>
             </div>
           </div>

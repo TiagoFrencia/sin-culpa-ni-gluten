@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, MessageCircle, HelpCircle } from 'lucide-react';
 import { buildGeneralInquiryUrl } from '@/utils/whatsapp';
-import { BUSINESS_CONFIG } from '@/config/business';
+import { useCatalog } from '@/context/CatalogContext';
 
 interface FaqItem {
   question: string;
@@ -10,6 +10,7 @@ interface FaqItem {
 }
 
 export function FaqSection() {
+  const { business } = useCatalog();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs: FaqItem[] = [
@@ -56,7 +57,8 @@ export function FaqSection() {
   };
 
   const whatsappInquiryUrl = buildGeneralInquiryUrl(
-    '¡Hola! Tengo una duda sobre los productos y su cocina libre de gluten.'
+    '¡Hola! Tengo una duda sobre los productos y su cocina libre de gluten.',
+    business.whatsappPhone
   );
 
   return (
@@ -166,7 +168,7 @@ export function FaqSection() {
             className="inline-flex items-center gap-2 bg-terracotta-600 hover:bg-terracotta-700 text-cream-50 font-semibold px-6 py-3 rounded-full text-xs sm:text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
           >
             <MessageCircle className="w-4 h-4" aria-hidden="true" />
-            <span>Escribinos al {BUSINESS_CONFIG.whatsappDisplay}</span>
+            <span>Escribinos al {business.whatsappDisplay}</span>
           </a>
         </div>
       </div>

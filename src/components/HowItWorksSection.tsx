@@ -1,7 +1,8 @@
 import { ShoppingBag, MessageCircle, Flame, Truck, ArrowRight } from 'lucide-react';
-import { BUSINESS_CONFIG } from '@/config/business';
+import { useCatalog } from '@/context/CatalogContext';
 
 export function HowItWorksSection() {
+  const { business } = useCatalog();
   const steps = [
     {
       number: '01',
@@ -15,7 +16,7 @@ export function HowItWorksSection() {
       number: '02',
       title: 'Nos escribís en un clic',
       description:
-        `El pedido se arma solo en WhatsApp (${BUSINESS_CONFIG.whatsappDisplay}) y coordinamos el envío gratis en Río Cuarto o retiro a convenir.`,
+        `El pedido se arma solo en WhatsApp (${business.whatsappDisplay}) y coordinamos el envío gratis en Río Cuarto o retiro a convenir.`,
       icon: MessageCircle,
       tag: 'Atención personalizada',
     },
@@ -106,7 +107,7 @@ export function HowItWorksSection() {
             </div>
             <div>
               <p className="font-serif font-bold text-base text-cream-50">
-                {BUSINESS_CONFIG.deliveryHighlight}
+                {business.deliveryHighlight}
               </p>
               <p className="font-sans text-xs text-cream-200/70">
                 Llegamos a todos los barrios de la ciudad manteniendo intacta la cadena de frío.

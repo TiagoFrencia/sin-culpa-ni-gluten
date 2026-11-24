@@ -1,4 +1,18 @@
-export const businessConfig = {
+export interface BusinessConfig {
+  brandName: string;
+  slogan: string;
+  city: string;
+  country: string;
+  whatsappPhone: string;
+  whatsappDisplay: string;
+  instagramHandle: string;
+  instagramUrl: string;
+  deliveryHighlight: string;
+  trustBadge: string;
+  priceListImageUrl: string;
+}
+
+export const businessConfig: BusinessConfig = {
   brandName: "Sin Culpa Ni Gluten",
   slogan: "Comer rico y sin gluten ya no es un problema.",
   city: "Río Cuarto, Córdoba",
@@ -9,7 +23,8 @@ export const businessConfig = {
   instagramUrl: "https://www.instagram.com/sinculpa.nigluten/",
   deliveryHighlight: "¡Envío gratis en Río Cuarto!",
   trustBadge: "100% Libre de Contaminación Cruzada",
-} as const;
+  priceListImageUrl: "/images/lista-precios.jpg",
+};
 
 export const BUSINESS_CONFIG = businessConfig;
 

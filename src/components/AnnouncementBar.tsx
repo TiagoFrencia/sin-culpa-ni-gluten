@@ -1,7 +1,8 @@
 import { Truck, ShieldCheck } from 'lucide-react';
-import { BUSINESS_CONFIG } from '@/config/business';
+import { useCatalog } from '@/context/CatalogContext';
 
 export function AnnouncementBar() {
+  const { business } = useCatalog();
   return (
     <aside
       aria-label="Aviso destacado"
@@ -10,7 +11,7 @@ export function AnnouncementBar() {
       <div className="max-w-7xl mx-auto flex items-center justify-center flex-wrap gap-x-3 gap-y-0.5 text-center leading-normal">
         <span className="inline-flex items-center gap-1.5 font-semibold">
           <Truck className="w-3.5 h-3.5 text-cream-100 shrink-0" aria-hidden="true" />
-          <span>{BUSINESS_CONFIG.deliveryHighlight}</span>
+          <span>{business.deliveryHighlight}</span>
         </span>
 
         <span className="text-cream-200/50 hidden sm:inline" aria-hidden="true">
