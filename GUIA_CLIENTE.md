@@ -10,7 +10,8 @@ Esta guía está pensada para que puedan manejar los precios, el stock y las fot
 Para entrar al panel desde el navegador de su teléfono (Chrome o Safari):
 
 1. Abran el enlace de su web agregando `/admin` al final:  
-   👉 **`https://sinculpanigluten.com/admin`**
+   👉 **`https://sin-culpa-ni-gluten.vercel.app/admin`**  
+   *(o cuando tengan el dominio `.com` vinculado: `https://sinculpanigluten.com/admin`)*
 2. Ingresen con sus datos de acceso:
    * **Usuario / Email:** `admin@sinculpanigluten.com`
    * **Contraseña:** `SinCulpaAdmin2026!#Segura`
