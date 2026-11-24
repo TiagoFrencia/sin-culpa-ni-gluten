@@ -180,3 +180,37 @@ export async function compressAndUploadImage(
 
   return publicUrlData.publicUrl;
 }
+
+/**
+ * Borra una imagen anterior del bucket 'catalog-images' de Supabase Storage.
+ * Protege y no altera los archivos locales como '/images/...'.
+ */
+export async function deleteOldCatalogImage(oldUrl?: string): Promise<void> {
+  if (!oldUrl || !supabase) return;
+
+  // No borrar si es una imagen local estática empaquetada con la app
+  if (
+    oldUrl.startsWith('/images/') ||
+    oldUrl.startsWith('images/') ||
+    !oldUrl.includes('catalog-images')
+  ) {
+    return;
+  }
+
+  try {
+    const parts = oldUrl.split('catalog-images/');
+    if (parts.length < 2) return;
+
+    const rawPath = parts[1].split('?')[0];
+    const filePath = decodeURIComponent(rawPath);
+
+    if (filePath) {
+      const { error } = await supabase.storage.from('catalog-images').remove([filePath]);
+      if (error) {
+        console.warn('[imageUpload] Aviso al limpiar storage anterior:', error.message);
+      }
+    }
+  } catch (err) {
+    console.warn('[imageUpload] Error al intentar limpiar imagen de storage:', err);
+  }
+}

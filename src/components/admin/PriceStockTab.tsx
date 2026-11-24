@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
 import type { Product, Combo, ProductCategory, ProductVariant } from '@/types/catalog';
+import type { BusinessConfig } from '@/config/business';
+import { BUSINESS_CONFIG } from '@/config/business';
 import { supabase } from '@/lib/supabase';
-import { Search, Save, Check, RefreshCw, AlertCircle } from 'lucide-react';
+import { exportPriceListFlyer } from '@/utils/priceListExport';
+import {
+  Search,
+  Save,
+  Check,
+  RefreshCw,
+  AlertCircle,
+  Percent,
+  Download,
+  ArrowRight,
+  X,
+} from 'lucide-react';
 
 const CATEGORY_LABELS: Record<ProductCategory, string> = {
   milanesas: 'Milanesas',
@@ -15,34 +28,79 @@ const CATEGORY_LABELS: Record<ProductCategory, string> = {
 interface PriceStockTabProps {
   products: Product[];
   combos: Combo[];
+  business?: BusinessConfig;
   onRefresh: () => Promise<void>;
   showToast: (text: string, type?: 'success' | 'error' | 'info') => void;
+}
+
+type BulkScope = 'all' | 'products' | 'combos';
+type BulkRounding = 'none' | '100' | '500';
+
+function calculateAdjustedPrice(
+  basePrice: number,
+  percent: number,
+  rounding: BulkRounding
+): number {
+  const raw = basePrice * (1 + percent / 100);
+  if (rounding === '100') {
+    return Math.max(0, Math.round(raw / 100) * 100);
+  }
+  if (rounding === '500') {
+    return Math.max(0, Math.round(raw / 500) * 500);
+  }
+  return Math.max(0, Math.round(raw));
 }
 
 export const PriceStockTab: React.FC<PriceStockTabProps> = ({
   products,
   combos,
+  business,
   onRefresh,
   showToast,
 }) => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
+
   // Estado local para edición de precios antes de persistir
-  // Key: `prod-${id}` o `combo-${id}`
   const [productVariantsEdit, setProductVariantsEdit] = useState<Record<string, ProductVariant[]>>({});
   const [comboPricesEdit, setComboPricesEdit] = useState<Record<string, { regular: number; promo: number | null }>>({});
-  
+
   // Estados de guardado / loading por ítem
   const [savingIds, setSavingIds] = useState<Record<string, boolean>>({});
   const [stockUpdatingIds, setStockUpdatingIds] = useState<Record<string, boolean>>({});
+
+  // Estado para flyer de estados
+  const [isDownloadingFlyer, setIsDownloadingFlyer] = useState(false);
+
+  // Estados para modal de ajuste masivo de precios en %
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkPercent, setBulkPercent] = useState<number>(10);
+  const [bulkScope, setBulkScope] = useState<BulkScope>('all');
+  const [bulkRounding, setBulkRounding] = useState<BulkRounding>('100');
+  const [isApplyingBulk, setIsApplyingBulk] = useState(false);
+
+  const activeBusiness = business || BUSINESS_CONFIG;
+
+  // Descarga del flyer para estados
+  const handleDownloadFlyer = async () => {
+    try {
+      setIsDownloadingFlyer(true);
+      showToast('Generando flyer de alta resolución (1080x1920)...', 'info');
+      await exportPriceListFlyer(products, combos, activeBusiness);
+      showToast('Flyer descargado exitosamente', 'success');
+    } catch (err) {
+      showToast(`Error al generar flyer: ${(err as Error).message}`, 'error');
+    } finally {
+      setIsDownloadingFlyer(false);
+    }
+  };
 
   // 1. Toggle directo de Stock Disponible / Sin Stock
   const handleToggleProductStock = async (product: Product) => {
     if (!supabase) return;
     const nextStatus = !product.available;
     const key = `prod-stock-${product.id}`;
-    
+
     try {
       setStockUpdatingIds((prev) => ({ ...prev, [key]: true }));
       const { error } = await supabase
@@ -68,7 +126,7 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
     if (!supabase) return;
     const nextStatus = !combo.available;
     const key = `combo-stock-${combo.id}`;
-    
+
     try {
       setStockUpdatingIds((prev) => ({ ...prev, [key]: true }));
       const { error } = await supabase
@@ -90,7 +148,7 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
     }
   };
 
-  // 2. Modificación de precios de variantes de Producto
+  // 2. Modificación individual de precios de Producto
   const getEditingVariants = (product: Product): ProductVariant[] => {
     return productVariantsEdit[product.id] ?? product.variants;
   };
@@ -120,10 +178,8 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
     const updated = [...currentVariants];
     const currentPrice = updated[variantIndex].price;
     if (currentPrice === null) {
-      // Activar precio numérico por defecto 0 para que puedan tipear
       updated[variantIndex] = { ...updated[variantIndex], price: 0 };
     } else {
-      // Marcar como consultar
       updated[variantIndex] = { ...updated[variantIndex], price: null };
     }
     setProductVariantsEdit((prev) => ({ ...prev, [productId]: updated }));
@@ -144,7 +200,6 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
       if (error) throw error;
 
       showToast(`Precios de "${product.name}" actualizados`, 'success');
-      // Limpiar estado de edición pendiente de este producto
       setProductVariantsEdit((prev) => {
         const next = { ...prev };
         delete next[product.id];
@@ -158,7 +213,7 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
     }
   };
 
-  // 3. Modificación de precios de Combo
+  // 3. Modificación individual de precios de Combo
   const getEditingComboPrices = (combo: Combo) => {
     return comboPricesEdit[combo.id] ?? { regular: combo.regularPrice, promo: combo.promoPrice };
   };
@@ -201,7 +256,7 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
 
       if (error) throw error;
 
-      showToast(`Precios del "${combo.name}" actualizados`, 'success');
+      showToast(`Precios del combo "${combo.name}" actualizados`, 'success');
       setComboPricesEdit((prev) => {
         const next = { ...prev };
         delete next[combo.id];
@@ -215,25 +270,181 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
     }
   };
 
-  // Filtrado
-  const query = search.toLowerCase().trim();
+  // 4. Cálculo de Vista Previa para Ajuste Masivo en %
+  const bulkPreviewList = React.useMemo(() => {
+    const list: {
+      id: string;
+      title: string;
+      subtitle: string;
+      oldPrice: number;
+      newPrice: number;
+    }[] = [];
 
+    if (bulkScope === 'all' || bulkScope === 'products') {
+      for (const prod of products) {
+        for (const v of prod.variants) {
+          // NUNCA alterar variantes con price: null ("Consultar")
+          if (v.price !== null) {
+            const next = calculateAdjustedPrice(v.price, bulkPercent, bulkRounding);
+            list.push({
+              id: `${prod.id}-${v.id}`,
+              title: prod.name,
+              subtitle: v.label,
+              oldPrice: v.price,
+              newPrice: next,
+            });
+          }
+        }
+      }
+    }
+
+    if (bulkScope === 'all' || bulkScope === 'combos') {
+      for (const combo of combos) {
+        const nextReg = calculateAdjustedPrice(combo.regularPrice, bulkPercent, bulkRounding);
+        list.push({
+          id: `${combo.id}-reg`,
+          title: combo.name,
+          subtitle: 'Precio Regular',
+          oldPrice: combo.regularPrice,
+          newPrice: nextReg,
+        });
+
+        if (combo.promoPrice !== null) {
+          const nextPromo = calculateAdjustedPrice(combo.promoPrice, bulkPercent, bulkRounding);
+          list.push({
+            id: `${combo.id}-promo`,
+            title: combo.name,
+            subtitle: 'Precio Promo',
+            oldPrice: combo.promoPrice,
+            newPrice: nextPromo,
+          });
+        }
+      }
+    }
+
+    return list;
+  }, [products, combos, bulkPercent, bulkScope, bulkRounding]);
+
+  // 5. Confirmar y Ejecutar Ajuste Masivo en Supabase
+  const handleApplyBulkPriceAdjustment = async () => {
+    if (!supabase) return;
+
+    try {
+      setIsApplyingBulk(true);
+
+      const productUpdates: PromiseLike<unknown>[] = [];
+      const comboUpdates: PromiseLike<unknown>[] = [];
+
+      // Actualizar Productos
+      if (bulkScope === 'all' || bulkScope === 'products') {
+        for (const prod of products) {
+          const hasNumericPrice = prod.variants.some((v) => v.price !== null);
+          if (!hasNumericPrice) continue;
+
+          const updatedVariants = prod.variants.map((v) => {
+            if (v.price === null) return v; // Respeta variantes con "Consultar"
+            return {
+              ...v,
+              price: calculateAdjustedPrice(v.price, bulkPercent, bulkRounding),
+            };
+          });
+
+          productUpdates.push(
+            supabase
+              .from('products')
+              .update({ variants: updatedVariants })
+              .eq('id', prod.id)
+          );
+        }
+      }
+
+      // Actualizar Combos
+      if (bulkScope === 'all' || bulkScope === 'combos') {
+        for (const combo of combos) {
+          const newReg = calculateAdjustedPrice(combo.regularPrice, bulkPercent, bulkRounding);
+          const newPromo =
+            combo.promoPrice !== null
+              ? calculateAdjustedPrice(combo.promoPrice, bulkPercent, bulkRounding)
+              : null;
+
+          comboUpdates.push(
+            supabase
+              .from('combos')
+              .update({ regular_price: newReg, promo_price: newPromo })
+              .eq('id', combo.id)
+          );
+        }
+      }
+
+      await Promise.all([...productUpdates, ...comboUpdates]);
+
+      showToast(
+        `Precios ajustados (${bulkPercent > 0 ? `+${bulkPercent}%` : `${bulkPercent}%`}) en ${bulkPreviewList.length} ítems`,
+        'success'
+      );
+
+      // Limpiar estados locales de edición manual para refrescar con los nuevos valores
+      setProductVariantsEdit({});
+      setComboPricesEdit({});
+
+      await onRefresh();
+      setIsBulkModalOpen(false);
+    } catch (err) {
+      showToast(`Error al aplicar ajuste masivo: ${(err as Error).message}`, 'error');
+    } finally {
+      setIsApplyingBulk(false);
+    }
+  };
+
+  // Filtrado reactivo de catálogo
+  const normalizedSearch = search.toLowerCase().trim();
   const filteredProducts = products.filter((p) => {
-    const matchCategory = selectedCategory === 'all' || selectedCategory === p.category;
-    const matchQuery = !query || p.name.toLowerCase().includes(query) || p.shortDescription.toLowerCase().includes(query);
-    return matchCategory && matchQuery;
+    const matchesSearch =
+      !normalizedSearch ||
+      p.name.toLowerCase().includes(normalizedSearch) ||
+      p.variants.some((v) => v.label.toLowerCase().includes(normalizedSearch));
+    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
 
-  const showCombos = selectedCategory === 'all' || selectedCategory === 'combos';
-  const filteredCombos = showCombos
-    ? combos.filter((c) => !query || c.name.toLowerCase().includes(query) || c.subtitle.toLowerCase().includes(query))
+  const filteredCombos = selectedCategory === 'all' || selectedCategory === 'combos'
+    ? combos.filter(
+        (c) =>
+          !normalizedSearch ||
+          c.name.toLowerCase().includes(normalizedSearch) ||
+          c.subtitle.toLowerCase().includes(normalizedSearch)
+      )
     : [];
 
   const pendingChangesCount =
     Object.keys(productVariantsEdit).length + Object.keys(comboPricesEdit).length;
 
   return (
-    <div className="space-y-4 pb-16">
+    <div className="space-y-4 pb-16 w-full max-w-full overflow-x-hidden">
+      {/* Botones de Cabecera Operativa: Ajuste Masivo y Descarga de Flyer */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setIsBulkModalOpen(true)}
+          className="min-h-[44px] px-3 py-2.5 rounded-xl bg-white border border-[#A64B2A] text-[#A64B2A] hover:bg-[#A64B2A]/5 text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all"
+        >
+          <Percent className="w-4 h-4 shrink-0 text-[#A64B2A]" />
+          <span className="truncate">Ajustar precios en %</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleDownloadFlyer}
+          disabled={isDownloadingFlyer}
+          className="min-h-[44px] px-3 py-2.5 rounded-xl bg-[#A64B2A] hover:bg-[#8C3D21] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all disabled:opacity-50"
+        >
+          <Download className="w-4 h-4 shrink-0" />
+          <span className="truncate">
+            {isDownloadingFlyer ? 'Generando...' : 'Descargar lista para Estados / IG'}
+          </span>
+        </button>
+      </div>
+
       {/* Banner Explicativo Modo Express */}
       <div className="bg-[#FAF7F2] border border-[#E5DCCB] rounded-2xl p-4 shadow-sm flex items-start gap-3">
         <div className="p-2 rounded-xl bg-[#A64B2A]/10 text-[#A64B2A] shrink-0 mt-0.5">
@@ -323,7 +534,7 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                   : 'border-red-200 bg-red-50/20 opacity-80'
               }`}
             >
-              {/* Encabezado del Producto: Fila 1 Categoría y Stock, Fila 2 Foto y Nombre completo */}
+              {/* Encabezado del Producto */}
               <div className="flex items-center justify-between gap-2 mb-2.5">
                 <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#A64B2A] bg-[#A64B2A]/10 px-2 py-0.5 rounded-md">
@@ -334,19 +545,24 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                       {product.badge}
                     </span>
                   )}
+                  {product.featured && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#5A653E]/10 text-[#5A653E] font-semibold">
+                      Destacado
+                    </span>
+                  )}
                 </div>
 
-                {/* Toggle Táctil Grande de Stock */}
+                {/* Botón táctil grande de Stock */}
                 <button
                   type="button"
                   onClick={() => handleToggleProductStock(product)}
                   disabled={isStockUpdating}
-                  className={`min-h-[38px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
+                  aria-label={`Cambiar stock de ${product.name}`}
+                  className={`min-h-[38px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
                     product.available
                       ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
                       : 'bg-rose-100 text-rose-900 border border-rose-300 hover:bg-rose-200'
                   }`}
-                  aria-label={product.available ? 'Marcar sin stock' : 'Marcar disponible'}
                 >
                   <span
                     className={`w-2 h-2 rounded-full ${
@@ -357,7 +573,7 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                 </button>
               </div>
 
-              {/* Fila 2: Miniatura junto a Nombre Completo (sin truncar apretado) */}
+              {/* Miniatura junto a Nombre Completo */}
               <div className="flex items-center gap-3 mb-3">
                 <img
                   src={product.image}
@@ -366,79 +582,65 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                   loading="lazy"
                 />
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-bold text-[#1D120D] line-clamp-2 leading-snug break-words">
+                  <h4 className="text-sm font-bold text-[#1D120D] line-clamp-2 leading-snug break-words">
                     {product.name}
-                  </h3>
+                  </h4>
                 </div>
               </div>
 
-              {/* Variantes y Precios */}
+              {/* Fila de Variantes y Precios Editables */}
               <div className="space-y-2 pt-2 border-t border-[#E5DCCB]/60">
-                <p className="text-[11px] font-semibold text-[#6B574B] uppercase tracking-wider">
-                  Variantes y Precios:
-                </p>
+                {variants.map((variant, idx) => {
+                  const isConsult = variant.price === null;
+                  return (
+                    <div
+                      key={variant.id || idx}
+                      className="flex items-center justify-between gap-2 bg-[#FAF7F2] p-2 sm:p-2.5 rounded-xl border border-[#E5DCCB]/70"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-bold text-[#1D120D] block truncate">
+                          {variant.label}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleConsultPrice(product.id, variants, idx)}
+                          className="text-[10px] text-[#A64B2A] hover:underline block mt-0.5"
+                        >
+                          {isConsult ? 'Cambiar a precio numérico' : 'Marcar como "Consultar"'}
+                        </button>
+                      </div>
 
-                {variants.map((v, idx) => (
-                  <div
-                    key={v.id || idx}
-                    className="flex flex-wrap items-center justify-between gap-2 bg-[#FAF7F2] p-2.5 rounded-xl border border-[#E5DCCB]/70"
-                  >
-                    <div className="text-xs font-medium text-[#1D120D] min-w-[80px]">
-                      {v.label}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {v.price === null ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-semibold px-2 py-1 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+                      <div className="flex items-center gap-1 shrink-0">
+                        {isConsult ? (
+                          <span className="text-xs italic text-[#6B574B] px-3 py-1.5 bg-white border border-[#E5DCCB] rounded-lg">
                             Consultar
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleConsultPrice(product.id, variants, idx)}
-                            className="text-[11px] text-[#A64B2A] hover:underline font-semibold p-1"
-                          >
-                            Poner precio
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5">
+                        ) : (
                           <div className="relative flex items-center">
-                            <span className="absolute left-2.5 text-xs font-bold text-[#6B574B]">
-                              $
-                            </span>
+                            <span className="absolute left-2.5 text-xs font-bold text-[#6B574B]">$</span>
                             <input
                               type="text"
                               inputMode="numeric"
-                              pattern="[0-9]*"
-                              value={v.price}
+                              value={variant.price === null ? '' : variant.price}
                               onChange={(e) =>
                                 handleVariantPriceChange(product.id, variants, idx, e.target.value)
                               }
-                              className="w-24 bg-white border border-[#E5DCCB] rounded-lg pl-6 pr-2 py-1 text-sm font-bold text-[#1D120D] focus:outline-none focus:ring-1 focus:ring-[#A64B2A]"
+                              className="w-24 sm:w-28 bg-white border border-[#E5DCCB] rounded-lg pl-6 pr-2 py-1 text-sm font-bold text-[#1D120D] text-right focus:outline-none focus:border-[#A64B2A] focus:ring-1 focus:ring-[#A64B2A]"
                             />
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleConsultPrice(product.id, variants, idx)}
-                            className="text-[10px] text-[#6B574B] hover:text-[#A64B2A] p-1 font-medium"
-                            title="Cambiar a consultar por WhatsApp"
-                          >
-                            Consultar
-                          </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* Botón Guardar Cambios por Fila */}
+              {/* Botón Guardar individual si hubo cambios en este producto */}
               {isModified && (
                 <div className="mt-3 pt-2 flex items-center justify-between bg-amber-50 p-2 rounded-xl border border-amber-200">
                   <span className="text-xs text-amber-800 font-medium flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-                    Precios modificados sin guardar
+                    Cambios sin guardar
                   </span>
                   <button
                     type="button"
@@ -455,12 +657,14 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
           );
         })}
 
-        {/* Sección de Combos si corresponde */}
+        {/* Listado de Combos */}
         {filteredCombos.length > 0 && (
-          <div className="space-y-3 pt-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#A64B2A] px-1">
-              Combos para Freezer ({filteredCombos.length})
-            </h3>
+          <div className="space-y-3 pt-4 border-t-2 border-[#E5DCCB]">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#5A653E] bg-[#5A653E]/10 px-2 py-0.5 rounded-md">
+                Packs y Combos para Freezer
+              </span>
+            </div>
 
             {filteredCombos.map((combo) => {
               const prices = getEditingComboPrices(combo);
@@ -479,11 +683,10 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                       : 'border-red-200 bg-red-50/20 opacity-80'
                   }`}
                 >
-                  {/* Encabezado del Combo: Fila 1 Categoría y Stock, Fila 2 Foto y Nombre completo */}
                   <div className="flex items-center justify-between gap-2 mb-2.5">
                     <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A653E] bg-[#5A653E]/10 px-2 py-0.5 rounded-md">
-                        Combo Especial
+                        Combo Freezer
                       </span>
                       {combo.badge && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
@@ -496,7 +699,8 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                       type="button"
                       onClick={() => handleToggleComboStock(combo)}
                       disabled={isStockUpdating}
-                      className={`min-h-[38px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
+                      aria-label={`Cambiar stock de combo ${combo.name}`}
+                      className={`min-h-[38px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 ${
                         combo.available
                           ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
                           : 'bg-rose-100 text-rose-900 border border-rose-300 hover:bg-rose-200'
@@ -511,7 +715,6 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                     </button>
                   </div>
 
-                  {/* Fila 2: Miniatura junto a Nombre Completo */}
                   <div className="flex items-center gap-3 mb-3">
                     <img
                       src={combo.image}
@@ -589,7 +792,7 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
         )}
       </div>
 
-      {/* Barra fija inferior si hay cambios masivos sin guardar */}
+      {/* Barra fija inferior si hay cambios masivos pendientes */}
       {pendingChangesCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#1D120D] text-white py-3 px-4 shadow-xl border-t border-black/20 flex items-center justify-between max-w-lg mx-auto">
           <div className="text-xs">
@@ -599,7 +802,6 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
           <button
             type="button"
             onClick={async () => {
-              // Guardar todos los productos pendientes
               for (const p of products) {
                 if (productVariantsEdit[p.id]) {
                   await handleSaveProductPrices(p);
@@ -616,6 +818,195 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
             <Check className="w-4 h-4" />
             Guardar todo
           </button>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* MODAL MOBILE-FIRST: Ajuste masivo de precios por porcentaje         */}
+      {/* =================================================================== */}
+      {isBulkModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-[#FAF7F2] w-full max-w-[calc(100vw-1rem)] sm:max-w-lg max-h-[92dvh] rounded-2xl border border-[#E5DCCB] shadow-2xl flex flex-col overflow-x-hidden mx-auto my-auto min-w-0 animate-in fade-in zoom-in-95">
+            {/* Cabecera del Modal */}
+            <div className="p-3.5 sm:p-4 border-b border-[#E5DCCB] flex items-center justify-between bg-white min-w-0 gap-2 shrink-0">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-base font-bold text-[#1D120D] truncate">
+                  Ajustar Precios por Porcentaje
+                </h3>
+                <p className="text-[11px] sm:text-xs text-[#6B574B] truncate">
+                  Aplica cambios en lote con vista previa antes de guardar
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBulkModalOpen(false)}
+                className="p-1.5 sm:p-2 rounded-xl text-[#6B574B] hover:text-[#1D120D] hover:bg-black/5 shrink-0"
+                aria-label="Cerrar modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Contenido del modal */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5 space-y-4 text-xs min-w-0">
+              {/* 1. Porcentaje */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#3E271E] block">
+                  Porcentaje a aplicar:
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-[#6B574B]">
+                      %
+                    </span>
+                    <input
+                      type="number"
+                      value={bulkPercent}
+                      onChange={(e) => setBulkPercent(Number(e.target.value))}
+                      placeholder="10"
+                      className="w-full bg-white border border-[#E5DCCB] rounded-xl pl-8 pr-3 py-2 text-sm font-bold text-[#1D120D]"
+                    />
+                  </div>
+                </div>
+
+                {/* Chips rápidos de porcentaje */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                  {[5, 10, 15, 20, -5, -10].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => setBulkPercent(pct)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        bulkPercent === pct
+                          ? 'bg-[#A64B2A] text-white shadow-2xs'
+                          : 'bg-white border border-[#E5DCCB] text-[#1D120D] hover:bg-stone-50'
+                      }`}
+                    >
+                      {pct > 0 ? `+${pct}%` : `${pct}%`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Alcance */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#3E271E] block">
+                  Alcance del ajuste:
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(
+                    [
+                      { key: 'all', label: 'Todo' },
+                      { key: 'products', label: 'Solo productos' },
+                      { key: 'combos', label: 'Solo combos' },
+                    ] as const
+                  ).map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setBulkScope(item.key)}
+                      className={`py-2 px-1 text-center rounded-xl text-xs font-bold transition-all ${
+                        bulkScope === item.key
+                          ? 'bg-[#A64B2A] text-white shadow-2xs'
+                          : 'bg-white border border-[#E5DCCB] text-[#6B574B] hover:text-[#1D120D]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Redondeo */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#3E271E] block">
+                  Regla de redondeo:
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(
+                    [
+                      { key: 'none', label: 'Sin redondeo' },
+                      { key: '100', label: 'Múltiplo de $100' },
+                      { key: '500', label: 'Múltiplo de $500' },
+                    ] as const
+                  ).map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setBulkRounding(item.key)}
+                      className={`py-2 px-1 text-center rounded-xl text-xs font-bold transition-all ${
+                        bulkRounding === item.key
+                          ? 'bg-[#5A653E] text-white shadow-2xs'
+                          : 'bg-white border border-[#E5DCCB] text-[#6B574B] hover:text-[#1D120D]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4. Tabla de Vista Previa */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between text-xs font-bold text-[#3E271E]">
+                  <span>Vista previa de cambios ({bulkPreviewList.length} ítems):</span>
+                  <span className="text-[10px] text-[#6B574B] font-normal">
+                    Variantes con "Consultar" no se alteran
+                  </span>
+                </div>
+
+                <div className="max-h-56 overflow-y-auto divide-y divide-[#E5DCCB] bg-white rounded-xl border border-[#E5DCCB] shadow-2xs">
+                  {bulkPreviewList.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-2 sm:p-2.5 flex items-center justify-between gap-2 text-xs"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-[#1D120D] truncate">{item.title}</p>
+                        <p className="text-[10px] text-[#6B574B] truncate">{item.subtitle}</p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0 tabular-nums">
+                        <span className="line-through text-stone-400 text-[11px]">
+                          ${item.oldPrice.toLocaleString('es-AR')}
+                        </span>
+                        <ArrowRight className="w-3 h-3 text-[#A64B2A]" />
+                        <span className="font-bold text-[#A64B2A] text-xs sm:text-sm">
+                          ${item.newPrice.toLocaleString('es-AR')}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Acciones del Modal */}
+            <div className="p-3.5 sm:p-4 border-t border-[#E5DCCB] bg-white flex items-center justify-end gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsBulkModalOpen(false)}
+                disabled={isApplyingBulk}
+                className="px-4 py-2.5 rounded-xl border border-[#E5DCCB] text-[#1D120D] text-xs font-bold hover:bg-stone-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleApplyBulkPriceAdjustment}
+                disabled={isApplyingBulk || bulkPreviewList.length === 0}
+                className="px-5 py-2.5 rounded-xl bg-[#A64B2A] hover:bg-[#8C3D21] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+              >
+                <Check className="w-4 h-4" />
+                <span>
+                  {isApplyingBulk
+                    ? 'Actualizando base de datos...'
+                    : `Confirmar y Aplicar a ${bulkPreviewList.length} ítems`}
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

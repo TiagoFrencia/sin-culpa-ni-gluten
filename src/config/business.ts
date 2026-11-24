@@ -10,6 +10,8 @@ export interface BusinessConfig {
   deliveryHighlight: string;
   trustBadge: string;
   priceListImageUrl: string;
+  isAcceptingOrders: boolean;
+  pauseMessage: string;
 }
 
 export const businessConfig: BusinessConfig = {
@@ -24,6 +26,8 @@ export const businessConfig: BusinessConfig = {
   deliveryHighlight: "¡Envío gratis en Río Cuarto!",
   trustBadge: "100% Libre de Contaminación Cruzada",
   priceListImageUrl: "/images/lista-precios.jpg",
+  isAcceptingOrders: true,
+  pauseMessage: "Estamos con agenda completa por hoy. Volvemos a tomar pedidos muy pronto.",
 };
 
 export const BUSINESS_CONFIG = businessConfig;

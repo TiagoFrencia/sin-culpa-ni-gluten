@@ -1,96 +1,221 @@
 # 🌾 Guía Rápida del Panel de Control — Sin Culpa Ni Gluten
 
-¡Hola **Flor y Fabrizio**! Bienvenidos al panel de administración de su tienda online.  
-Esta guía está pensada para que puedan manejar los precios, el stock y las fotos directo desde el celular en pocos segundos y con total tranquilidad: **la web está blindada para que nada se rompa ni se desconfigure**.
+¡Hola **Flor y Fabrizio**! Bienvenidos al manual actualizado de su tienda online.  
+Esta guía está pensada para que puedan manejar los precios, el stock, los pedidos y las fotos directamente desde el celular en pocos segundos y con total tranquilidad: **la web está blindada para que nada se rompa ni se desconfigure**.
 
 ---
 
-## 📱 1. Cómo ingresar y tener la app en la pantalla del celular
+## 📱 1. Accesos y cómo instalar el panel como app en el celular
 
 Para entrar al panel desde el navegador de su teléfono (Chrome o Safari):
 
-1. Abran el enlace de su web agregando `/admin` al final:  
-   👉 **`https://sin-culpa-ni-gluten.vercel.app/admin`**  
-   *(o cuando tengan el dominio `.com` vinculado: `https://sinculpanigluten.com/admin`)*
-2. Ingresen con sus datos de acceso:
-   * **Usuario / Email:** `admin@sinculpanigluten.com`
-   * **Contraseña:** `SinCulpaAdmin2026!#Segura`
-3. Toquen **"Iniciar Sesión"**.
+* **Tienda pública (lo que ven sus clientes):**  
+  👉 **`https://sin-culpa-ni-gluten.vercel.app`**  
+  *(o cuando tengan el dominio `.com` vinculado: `https://sinculpanigluten.com`)*
+
+* **Panel de administración (exclusivo para ustedes):**  
+  👉 **`https://sin-culpa-ni-gluten.vercel.app/admin`**
+
+* **Datos de ingreso iniciales:**  
+  * **Usuario / Email:** `admin@sinculpanigluten.com`  
+  * **Contraseña inicial:** `SinCulpaAdmin2026!#Segura`  
+  *(Pueden cambiar esta contraseña en cualquier momento por una propia desde la pestaña **Negocio**).*
 
 ### 💡 Guardar como ícono en el celular (como si fuera una App)
-Para no tener que escribir la dirección cada vez:
-* **En iPhone (Safari):** Toquen el botón de compartir (el cuadradito con la flecha hacia arriba) en la barra inferior y elijan **"Agregar a pantalla de inicio"**.
-* **En Android (Chrome):** Toquen los 3 puntitos arriba a la derecha y elijan **"Agregar a la pantalla principal"** o **"Instalar aplicación"**.
+Para no tener que escribir la dirección cada vez que quieran usarlo:
+* **En Android (Google Chrome):**
+  1. Abran `https://sin-culpa-ni-gluten.vercel.app/admin`.
+  2. Toquen los **3 puntitos** arriba a la derecha de la pantalla.
+  3. Elijan **"Agregar a la pantalla principal"** (o *"Instalar aplicación"*).
+  4. Confirmen y toquen **"Agregar"**.
+* **En iPhone (Safari):**
+  1. Abran `https://sin-culpa-ni-gluten.vercel.app/admin`.
+  2. Toquen el botón de compartir abajo en el centro (el cuadradito con la flecha hacia arriba).
+  3. Deslicen y elijan **"Agregar a pantalla de inicio"** (o *"Agregar al inicio"*).
+  4. Toquen **"Agregar"** arriba a la derecha.
 
-¡Listo! Les queda un ícono directo en la pantalla de inicio para entrar con un solo toque.
+¡Listo! Les queda un ícono con el logo de Sin Culpa Ni Gluten en su pantalla de inicio para entrar con un solo toque.
 
 ---
 
-## ⚡ 2. Modo Express: Cambiar precios o pausar stock en 10 segundos
+## ⚡ 2. Pestaña "Precios y Stock" (uso diario en 10 segundos)
 
-La primera pestaña que verán al ingresar se llama **"Precios y Stock"**. Está pensada para cuando están en la cocina o preparando pedidos y necesitan hacer un ajuste rápido:
+La primera pestaña que verán al ingresar se llama **"Precios y Stock"**. Está pensada para cuando están en la cocina o preparando pedidos y necesitan hacer un ajuste en un instante:
 
-### Pausar o activar un producto (Sin stock):
-* Al lado de cada producto o combo verán un botón grande:
-  * **Verde (`Disponible`):** Los clientes pueden pedirlo normalmente.
-  * **Rojo (`Sin stock`):** El producto se pausa de inmediato en la tienda y los clientes no podrán sumarlo al carrito.
+### 🟢 Pausar o reactivar un producto o combo (Stock inmediato)
+* Al lado de cada producto o combo verán un botón grande y claro:
+  * **Verde (`Disponible`):** Los clientes pueden pedirlo normalmente y figura en la lista de precios.
+  * **Rojo (`Sin stock`):** El producto se pausa de inmediato en la tienda, bloquea el botón para sumarlo al carrito y lo retira automáticamente de la lista de precios para que nadie encargue algo que no tienen.
 * **Solo toquen el botón** para cambiar el estado. Se guarda al instante en la web con un aviso de confirmación.
 
-### Actualizar precios:
-1. Escriban el nuevo monto en el casillero con el signo **`$`** de la variante que deseen (ej. en *1 kg* o *Docena*).
-2. Si un producto no tiene precio fijo y prefieren que los clientes pregunten, toquen **"Consultar"**.
-3. Toquen el botón **"Guardar"** que aparece en la tarjeta (o en la barra negra flotante al final de la pantalla).
+### 💵 Cambiar un precio puntual y guardar
+1. Escriban el nuevo monto en el casillero con el signo **`$`** de la presentación que deseen (ej. en *1 kg* o *Docena*).
+2. Si un producto no tiene precio fijo y prefieren que los clientes pregunten por privado, toquen **"Consultar"**.
+3. Toquen el botón **"Guardar"** que aparece en la tarjeta (o en la barra negra flotante al final de la pantalla que dice *"Guardar todo"*).
+
+### 📈 Aumento masivo en porcentaje (`Ajustar precios en %`)
+Cuando haya aumentos en los insumos o inflación, no hace falta cambiar producto por producto:
+1. Toquen el botón blanco **"Ajustar precios en %"** arriba a la izquierda.
+2. **Elijan el porcentaje:** Pueden tocar los botones rápidos (**`+5%`**, **`+10%`**, **`+15%`**, **`+20%`**) o escribir cualquier número libre en el casillero.
+3. **Elijan el alcance del ajuste:**
+   * **Todo:** modifica productos y combos a la vez.
+   * **Solo productos:** modifica solo los productos individuales.
+   * **Solo combos:** actualiza únicamente los combos para freezer.
+4. **Elijan la regla de redondeo:**
+   * **Múltiplo de $100:** redondea las cifras para que queden prolijas (ej. `$14.830` pasa a `$14.800`).
+   * **Múltiplo de $500:** ideal para redondear en valores fáciles de cobrar en efectivo (ej. `$14.830` pasa a `$15.000`).
+   * **Sin redondeo:** aplica el porcentaje exacto matemático.
+5. **Revisen la vista previa:** En pantalla verán una lista completa que les muestra el **Precio actual ➔ Precio nuevo** de cada ítem antes de confirmar.
+   * *Aclaración importante:* Los ítems marcados como **"Consultar"** nunca se modifican; quedan protegidos tal como están.
+6. Toquen **"Aplicar ajuste"** y todo el catálogo se actualizará automáticamente.
+
+### 📲 Lista de precios automática y flyer para Estados / Instagram Stories
+¡Ya no necesitan diseñar flyers a mano en Canva o Photoshop cada vez que modifican un precio!
+* **La web genera la lista de precios oficial en vivo:** Siempre muestra los productos que tienen en stock y los valores vigentes del día. Sus clientes la pueden consultar tocando "Ver lista completa" en la tienda.
+* **Botón "Descargar lista para Estados / IG":**
+  1. Toquen el botón marrón arriba a la derecha.
+  2. En dos segundos, el sistema descarga en su teléfono una imagen vertical en alta resolución (formato 1080x1920 px, ideal para pantalla completa).
+  3. Viene lista con el logo, colores de la marca, categorías ordenadas, combos destacados y datos de contacto.
+  4. La abren en WhatsApp o Instagram y la publican en sus **Estados** o **Historias** en un toque.
 
 ---
 
-## 🥐 3. Agregar un producto nuevo o cambiar una foto
+## 🥐 3. Pestaña "Productos" y Pestaña "Combos"
 
-En la pestaña **"Productos"** pueden sumar nuevas delicias celíacas o renovar las fotos:
+Aquí administran la información detallada de su oferta de alimentos libres de gluten.
 
-1. Toquen el botón marrón **`+ Nuevo Producto`** arriba a la derecha.
-2. **Subir la foto:** Toquen el botón con el ícono de cámara (**"Tomar foto o subir de galería"**).
-   * Pueden sacar una foto en el momento o elegir una de la galería.
-   * **No se preocupen por el tamaño ni la forma:** La web recorta la foto automáticamente en la proporción perfecta (4:3) y la comprime para que cargue súper rápido y se vea impecable en cualquier pantalla.
-3. **Nombre y Categoría:**
-   * Escriban el nombre (ej. *Milanesas de Suprema de Pollo*).
-   * Elijan la categoría en el menú desplegable (*Milanesas*, *Hamburguesas*, *Empanadas*, *Pizzas*, *Panadería* o *Platos Especiales*).
-4. **Precios y presentaciones:**
-   * Indiquen la presentación (ej. `x 1 kg`, `Media docena`, `Docena`) y el precio numérico.
-   * Si ofrecen más de un tamaño, toquen **`+ Agregar variante`**.
-5. **Detalles extra opcionales:** Pueden agregar tip de cocción, tiempo en freezer, si acepta consultar por pack de 500g o marcarlo como "Destacado".
-6. Toquen **"Guardar Producto"** y ya estará visible para todos sus clientes.
+### Crear o editar un producto
+1. Para sumar uno nuevo, toquen el botón **`+ Nuevo Producto`** (o toquen el lápiz **"Editar"** en uno existente).
+2. Completen los datos:
+   * **Nombre:** ej. *Milanesas de Suprema de Pollo*.
+   * **Categoría:** elijan en el menú (*Milanesas*, *Hamburguesas*, *Empanadas*, *Pizzas*, *Panadería* o *Platos Especiales*).
+   * **Variantes y precios:** indiquen la presentación (ej. `x 1 kg`, `Media docena`, `Docena`) y su valor. Si tienen más de un tamaño, toquen **`+ Agregar variante`**.
+   * **Detalles adicionales opcionales:** tips de cocción, tiempo en freezer, si acepta consultar por 500g o destacarlo en la portada.
+3. Toquen **"Guardar Producto"**.
 
-> **Consejo:** Si algún producto deja de elaborarse temporalmente, es mejor marcarlo como **"Sin stock"** en lugar de eliminarlo, así no pierden la foto ni la descripción cargada.
-
----
-
-## 📦 4. Gestionar Combos para Freezer
-
+### Crear o editar combos para freezer
 En la pestaña **"Combos"**:
-* Pueden editar los combos de ahorro familiar o crear nuevos.
-* Podrán definir el precio regular y un **precio promocional opcional** tachado (ej. Precio regular `$24.500`, Promo `$22.500`), sumando una etiqueta llamativa como `Ahorrás 15%`.
-* La lista de ítems incluidos se puede editar línea por línea para detallar exactamente qué cortes o comidas trae.
+1. Toquen **`+ Nuevo Combo`** (o el lápiz de edición).
+2. Carguen el nombre y subtítulo (ej. *Combo Familiar Clásico — Ideal para resolver los almuerzos de la semana*).
+3. **Ítems incluidos:** escriban los productos incluidos línea por línea para que el cliente sepa con exactitud qué trae (ej. *1 kg Milanesas de Nalga*, *1 docena Empanadas de Carne*).
+4. **Precio Regular y Precio Promocional (Opcional):**
+   * Carguen el precio regular de lista (ej. `$25.000`).
+   * Si quieren ofrecer un descuento especial, completen el **Precio Promo** (ej. `$22.500`). En la tienda el precio regular aparecerá tachado junto a una etiqueta destacada que atrae muchas compras.
+
+### 📸 Subir fotos desde el celular (cámara o galería)
+* Al crear o editar un producto o combo, toquen el botón de la cámara (**"Tomar foto o subir de galería"**).
+* Pueden tomar una fotografía en el momento o elegir una que ya tengan guardada.
+* **El sistema se encarga de todo lo técnico automáticamente:**
+  * Recorta la imagen en la proporción ideal (`4:3`) para que nunca se deforme ni quede estirada.
+  * Optimiza y comprime el peso del archivo para que cargue súper rápido en el celular de los clientes sin gastarles datos móviles.
+  * **Limpia la foto anterior:** si reemplazan una imagen vieja, el sistema la elimina automáticamente del servidor para no dejar archivos huérfanos ni ocupar espacio de más.
+
+### ↕️ Cambiar el orden de aparición con las flechas `↑ / ↓`
+* En el listado de productos y combos verán dos flechas: **`↑ Subir`** y **`↓ Bajar`**.
+* Tocándolas pueden mover cualquier producto más arriba o más abajo para priorizar en la tienda las comidas que más les interese destacar esa semana.
+
+> 💡 **Recomendación práctica:** Si algún producto deja de elaborarse por unos días o se quedan sin un ingrediente, **usen siempre el botón "Sin stock" en lugar de borrar el producto**. Así no pierden la foto, los textos ni los precios ya cargados, y lo reactivan cuando vuelvan a cocinarlo.
 
 ---
 
-## ⚙️ 5. Pestaña "Negocio": WhatsApp y Lista de Precios Oficial
+## ⚙️ 4. Pestaña "Negocio" (control de agenda y datos de contacto)
 
-En la pestaña **"Negocio"** gestionan los datos principales de la marca en un solo lugar:
+En la pestaña **"Negocio"** gestionan la información clave de la marca y la disponibilidad de pedidos:
 
-* **Número de WhatsApp de pedidos:** Si en algún momento cambian de línea o número comercial, solo actualizan el casillero aquí y todos los botones de la web redirigirán al nuevo WhatsApp automáticamente.
-* **Barra superior de anuncio:** Pueden cambiar el mensaje que aparece arriba de todo en la tienda (por ejemplo: *¡Envío gratis en Río Cuarto!* o *¡Tomamos pedidos hasta el jueves!*).
-* **Instagram oficial:** Para actualizar el enlace o usuario de su cuenta de Instagram.
-* **Nueva foto de la Lista de Precios:** Cuando impriman o armen un nuevo volante de precios:
-  1. Toquen **"Subir nueva foto de Lista de Precios"**.
-  2. Seleccionen la imagen de la lista.
-  3. El sistema optimiza la imagen **manteniendo la proporción original completa**, asegurando que ningún texto ni precio del volante quede cortado.
-  4. Toquen **"Guardar Configuración del Negocio"**.
+### ⏸️ Botón "Recibiendo pedidos / Pedidos pausados" (Control de agenda)
+Si tienen un feriado, salen de vacaciones o alcanzaron el límite de pedidos que pueden cocinar en el día:
+1. Toquen el selector para alternar entre:
+   * **🟢 Activo (Recibiendo pedidos):** La tienda toma pedidos con normalidad.
+   * **⏸️ Pausado (Pedidos pausados):** Pausa toda la tienda de un solo toque.
+2. **Mensaje personalizado:** Abajo pueden redactar el mensaje que verán los clientes cuando esté pausado (ejemplo: *"Estamos con agenda completa por hoy. Volvemos a tomar pedidos el martes a las 9 hs."*).
+3. **¿Qué pasa cuando pausan la tienda?:**
+   * Se muestra una alerta destacada en la barra superior.
+   * En el carrito de compras se desactiva el botón de envío a WhatsApp y se muestra el mensaje de pausa, impidiendo que les lleguen pedidos que no pueden elaborar.
+4. Cuando estén listos para volver a recibir pedidos, tocan **"Activo"** y la tienda vuelve a abrir al instante.
+
+### 📞 Teléfono de WhatsApp, Instagram y Barra Superior
+* **Número de WhatsApp de pedidos:**
+  * Escriban el número con código de área pero **sin el 0 y sin el 15** (por ejemplo: `358 572-8550`).
+  * El sistema le añade automáticamente el código de Argentina `549` y crea el enlace directo para que los mensajes de compra lleguen siempre a su WhatsApp.
+* **Usuario de Instagram:**
+  * Escriban simplemente su usuario (ej. `@sinculpa.nigluten`). El sistema arma el enlace oficial que lleva directo a su perfil.
+* **Texto de la Barra Superior de Anuncio:**
+  * Modifiquen el cartel que aparece arriba de todo en la tienda (ej. *¡Envío gratis en Río Cuarto!* o *¡Tomamos pedidos hasta el jueves!*).
+* Toquen **"Guardar Configuración del Negocio"** para aplicar los cambios.
+
+### 🔐 Cambiar la contraseña de acceso al panel
+Al final de la pestaña **Negocio** encontrarán la sección de seguridad:
+1. Escriban su nueva clave en **"Nueva Contraseña"** (mínimo 8 caracteres).
+2. Repítanla en **"Confirmar Nueva Contraseña"**.
+3. Toquen **"Actualizar Contraseña"**.  
+A partir de ese momento ingresarán al panel con su nueva clave personal.
 
 ---
 
-## 🔐 Seguridad y Cierre de Sesión
+## 📊 5. Pestaña "Métricas" (control de pedidos y contabilidad)
 
-* Arriba a la derecha encontrarán el botón **"Ver tienda"** para abrir la tienda pública en una pestaña nueva y comprobar cómo ven los cambios sus clientes en tiempo real.
+La pestaña **"Métricas"** les brinda el control real de los números de su emprendimiento, con un criterio contable transparente y sin números inflados.
+
+### 📅 Filtrar por período
+Arriba de todo pueden elegir qué lapso de tiempo consultar con un toque:
+* **`7 días`:** ideal para el balance semanal.
+* **`Este mes`:** seguimiento del mes en curso.
+* **`Mes anterior`:** para revisar cómo cerró el mes que pasó.
+* **`Todo`:** el historial acumulado desde el inicio.
+
+### 💰 Pedidos iniciados vs. Ventas confirmadas (Caja real)
+El sistema separa claramente dos conceptos para que su contabilidad sea exacta:
+1. **Pedidos iniciados / Por confirmar (Pendientes):** Son clientes que armaron su carrito en la web e hicieron clic para enviar el pedido a WhatsApp. Reflejan intenciones de compra.
+2. **Ventas confirmadas (Caja real):** Es el dinero real de los pedidos que efectivamente cerraron, cobraron o coordinaron entrega. **Este indicador representa la plata que ingresó a su caja.**
+
+### 📋 Gestión de pedidos: Estados, notas internas y pedidos de prueba
+En la lista de pedidos recientes pueden revisar cada orden recibida:
+* **Cambiar el estado con un toque:**
+  * **`Confirmado` (Verde):** toquen este botón cuando el cliente haya pagado o coordinado la entrega. Suma automáticamente a las **Ventas Confirmadas**.
+  * **`Pendiente` (Amarillo):** para pedidos que recién llegan y están coordinando por WhatsApp.
+  * **`Cancelado` (Rojo):** si el cliente canceló o no concretó la compra.
+* **Notas internas:** pueden tocar el ícono de lápiz/nota para guardar aclaraciones internas (ej. *"Abona en efectivo al retirar"*, *"Entrega jueves 18 hs"*, *"Sin cebolla"*). Estas notas son 100% privadas para ustedes.
+* **Eliminar pedidos de prueba:** si ustedes mismos hicieron compras de prueba para probar la web, pueden tocar el ícono del cesto de basura en ese pedido para borrarlo y mantener sus estadísticas limpias.
+
+### 🏆 Ranking de productos y Embudo de visitas
+* **Ranking de comidas más pedidas:** Pueden ordenarlo con los botones:
+  * **`Por facturado ($)`:** qué comida les generó más dinero.
+  * **`Por unidades`:** qué producto o combo se vendió más cantidad de veces.
+  *(Pueden filtrar el ranking entre solo confirmados o todos los pedidos).*
+* **Embudo de visitas:** les muestra cuántas personas entraron a la tienda, cuántas abrieron la lista de precios, cuántas sumaron cosas al carrito y la tasa de conversión final a WhatsApp.
+
+### 📑 Exportar a Excel ("Exportar CSV")
+* Toquen el botón verde **"Exportar CSV"** arriba a la derecha.
+* Se descargará al instante un archivo compatible con Microsoft Excel o Google Sheets con la fecha, cliente, comida pedida, totales, estado y notas, listo para archivar o compartir con su contador.
+
+---
+
+## 💬 6. Consejos rápidos para WhatsApp Business
+
+La tienda web y su WhatsApp Business forman un equipo perfecto si siguen estos simples consejos:
+
+### ⚠️ No cargar el catálogo interno de WhatsApp
+* **Recomendación clave:** No carguen productos ni listas de precios dentro del catálogo propio de WhatsApp.
+* **¿Por qué?:** El catálogo de WhatsApp no se sincroniza solo. Si cambian un precio o pausan el stock en la web, tendrían que acordarse de modificarlo manualmente en WhatsApp también, lo que genera confusiones y precios viejos.
+* **La solución simple:** Su web oficial (`https://sin-culpa-ni-gluten.vercel.app`) es la **única lista oficial y actualizada**. Cada vez que alguien les pida precios, simplemente le mandan el enlace de la web o el flyer descargado con un toque.
+
+### 🏷️ Etiquetas de WhatsApp recomendadas
+Usen las etiquetas de colores de WhatsApp Business para organizar las conversaciones:
+* 🟡 `Pedido nuevo` (recién ingresó el mensaje desde la web).
+* 🔵 `Confirmado` (acordaron día y forma de entrega).
+* 🟢 `Pagado` (ya enviaron comprobante o se abona contra entrega).
+* 🟣 `Entregado` (pedido completado con éxito).
+
+### ⚡ Respuestas rápidas para ahorrar tiempo
+En WhatsApp Business (*Ajustes de empresa > Respuestas rápidas*) pueden crear atajos escribiendo una barra `/`:
+* **`/web`** ➔ *"¡Hola! Podés ver nuestro menú completo, combos para freezer y precios del día en nuestra web: https://sin-culpa-ni-gluten.vercel.app/ Armás tu pedido ahí y nos llega directo para coordinar. 🥐🌾"*
+* **`/alias`** ➔ *"Para confirmar tu pedido podés transferir a nuestro alias: `sin.culpa.gluten` (a nombre de ...). ¡Avisanos cuando esté listo el comprobante para agendarlo!"*
+
+---
+
+## 🔐 Ver la tienda y Cierre de Sesión
+
+* Arriba a la derecha siempre tienen el botón **"Ver tienda"** para abrir la tienda pública en una pestaña nueva y comprobar al instante cómo ven los cambios sus clientes.
 * Cuando terminen de usar el panel, pueden tocar **"Salir"** para cerrar la sesión de forma segura.
 
-*¡Cualquier duda que tengan en el día a día, estamos a disposición para ayudarlos a que el negocio siga creciendo!* ❤️🥖
+*¡Cualquier duda que tengan en el día a día, estamos a disposición para ayudarlos a que Sin Culpa Ni Gluten siga creciendo!* ❤️🥖

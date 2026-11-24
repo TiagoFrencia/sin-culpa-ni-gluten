@@ -40,4 +40,6 @@ export interface OrderContextValue {
   totalItems: number;
   subtotal: number;
   isEmpty: boolean;
+  cartAdjusted: boolean;
+  clearCartAdjustedNotice: () => void;
 }

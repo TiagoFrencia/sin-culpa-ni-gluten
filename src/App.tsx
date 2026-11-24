@@ -14,6 +14,7 @@ import { FloatingOrderBar } from '@/components/FloatingOrderBar';
 import { OrderDrawer } from '@/components/OrderDrawer';
 import { OrderProvider } from '@/context/OrderContext';
 import { CatalogProvider } from '@/context/CatalogContext';
+import { trackMetric } from '@/utils/analytics';
 
 // Code splitting estricto: el panel de administración no se descarga en la tienda pública
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
@@ -36,6 +37,13 @@ export function App() {
   }, []);
 
   const isAdminRoute = pathname.startsWith('/admin');
+
+  // Registro de analítica silenciosa: visita única por sesión (excluyendo /admin)
+  useEffect(() => {
+    if (!isAdminRoute) {
+      trackMetric('visits');
+    }
+  }, [isAdminRoute]);
 
   if (isAdminRoute) {
     return (

@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import type { BusinessConfig } from '@/config/business';
 import { supabase } from '@/lib/supabase';
-import { compressAndUploadImage } from '@/utils/imageUpload';
 import {
   Building2,
   Phone,
   Megaphone,
-  FileImage,
-  Camera,
   Check,
   ExternalLink,
+  Power,
+  Lock,
+  KeyRound,
 } from 'lucide-react';
 
 function InstagramIcon({ className = 'w-4 h-4' }: { className?: string }) {
@@ -61,7 +61,7 @@ function processWhatsAppInput(raw: string): { phone: string; display: string } {
     digits = digits.slice(1);
   }
 
-  // Quitar el 15 de celular si está después de la característica (ej. 358 15 5728550 -> 12 dígitos)
+  // Quitar el 15 de celular si está después de la característica
   if (digits.length === 12 && digits.slice(3, 5) === '15') {
     digits = digits.slice(0, 3) + digits.slice(5);
   } else if (digits.length === 11 && digits.startsWith('11') && digits.slice(2, 4) === '15') {
@@ -76,7 +76,6 @@ function processWhatsAppInput(raw: string): { phone: string; display: string } {
     };
   }
 
-  // Fallback si ingresó otro formato internacional
   return {
     phone: digits,
     display: raw.trim(),
@@ -88,7 +87,6 @@ function formatLocalPhone(local10: string): string {
   if (local10.startsWith('11')) {
     return `11 ${local10.slice(2, 6)}-${local10.slice(6)}`;
   }
-  // Características comunes de 3 dígitos (358, 351, 341, etc.)
   return `${local10.slice(0, 3)} ${local10.slice(3, 6)}-${local10.slice(6)}`;
 }
 
@@ -125,11 +123,18 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
   onRefresh,
   showToast,
 }) => {
+  // Estado operativo: Recibiendo pedidos / Pausado
+  const [isAcceptingOrders, setIsAcceptingOrders] = useState<boolean>(
+    business.isAcceptingOrders ?? true
+  );
+  const [pauseMessage, setPauseMessage] = useState<string>(
+    business.pauseMessage || 'Estamos con agenda completa por hoy. Volvemos a tomar pedidos muy pronto.'
+  );
+
   const [formData, setFormData] = useState({
     brandName: business.brandName,
     slogan: business.slogan,
     deliveryHighlight: business.deliveryHighlight,
-    priceListImageUrl: business.priceListImageUrl,
   });
 
   const [whatsappRaw, setWhatsappRaw] = useState(
@@ -139,33 +144,18 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
     business.instagramHandle || '@sinculpa.nigluten'
   );
 
-  const [isUploadingPriceList, setIsUploadingPriceList] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Estados para cambio de contraseña
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Previsualizaciones reactivas en vivo
   const liveWhatsApp = processWhatsAppInput(whatsappRaw);
   const liveInstagram = processInstagramInput(instagramRaw);
 
-  // Manejo de subida de lista de precios (manteniendo proporción original intacta)
-  const handlePriceListUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsUploadingPriceList(true);
-      showToast('Comprimiendo lista de precios (proporción original intacta)...', 'info');
-      const publicUrl = await compressAndUploadImage(file, 'pricelist');
-      setFormData((prev) => ({ ...prev, priceListImageUrl: publicUrl }));
-      showToast('Lista de precios actualizada y subida a la nube', 'success');
-    } catch (err) {
-      showToast(`Error al subir imagen: ${(err as Error).message}`, 'error');
-    } finally {
-      setIsUploadingPriceList(false);
-      e.target.value = '';
-    }
-  };
-
-  // Guardar configuración
+  // Guardar configuración general del negocio
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
@@ -189,13 +179,38 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
         whatsapp_display: processedPhone.display,
         instagram_handle: processedIg.handle,
         instagram_url: processedIg.url,
-        price_list_image_url: formData.priceListImageUrl.trim(),
+        is_accepting_orders: isAcceptingOrders,
+        pause_message: pauseMessage.trim(),
       };
 
-      const { error } = await supabase
+      // Intentar actualizar con las columnas v2 de pedidos
+      let { error } = await supabase
         .from('business_settings')
         .update(payload)
         .eq('id', 1);
+
+      // Si falla porque la columna aún no fue migrada en la base remota
+      if (error && error.message?.includes('column "is_accepting_orders" of relation "business_settings" does not exist')) {
+        const fallbackPayload = {
+          brand_name: formData.brandName.trim(),
+          slogan: formData.slogan.trim(),
+          delivery_highlight: formData.deliveryHighlight.trim(),
+          whatsapp_phone: processedPhone.phone,
+          whatsapp_display: processedPhone.display,
+          instagram_handle: processedIg.handle,
+          instagram_url: processedIg.url,
+        };
+        const fallbackRes = await supabase
+          .from('business_settings')
+          .update(fallbackPayload)
+          .eq('id', 1);
+
+        if (fallbackRes.error) throw fallbackRes.error;
+
+        showToast('Guardado. Ejecutá la migración SQL en Supabase para habilitar el interruptor de pausa.', 'info');
+        await onRefresh();
+        return;
+      }
 
       if (error) throw error;
 
@@ -208,6 +223,39 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
     }
   };
 
+  // Manejo de actualización de contraseña
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+
+    if (newPassword.length < 8) {
+      showToast('La nueva contraseña debe tener al menos 8 caracteres.', 'error');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showToast('Las contraseñas ingresadas no coinciden.', 'error');
+      return;
+    }
+
+    try {
+      setIsUpdatingPassword(true);
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      showToast('Contraseña de administrador actualizada con éxito', 'success');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      showToast(`Error al actualizar contraseña: ${(err as Error).message}`, 'error');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
   return (
     <div className="space-y-4 pb-16 w-full max-w-full overflow-x-hidden">
       {/* Banner Informativo */}
@@ -216,14 +264,100 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           <Building2 className="w-5 h-5" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-sm font-bold text-[#1D120D]">Datos del Negocio y Canales</h2>
+          <h2 className="text-sm font-bold text-[#1D120D]">Datos del Negocio y Operaciones</h2>
           <p className="text-xs text-[#6B574B] mt-0.5 leading-relaxed">
-            Configurá el número de WhatsApp receptor, el anuncio superior de la tienda y la foto de la lista de precios oficial.
+            Controlá el estado de recepción de pedidos, el número receptor de WhatsApp y las redes de contacto.
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* =================================================================== */}
+        {/* INTERRUPTOR: Recibiendo pedidos / Pedidos pausados                  */}
+        {/* =================================================================== */}
+        <div className="bg-white border border-[#E5DCCB] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
+          <div className="flex items-center justify-between border-b border-[#E5DCCB]/60 pb-2.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#1D120D]">
+              <Power className={`w-4 h-4 ${isAcceptingOrders ? 'text-emerald-600' : 'text-amber-600'}`} />
+              <span>Estado Operativo de Pedidos</span>
+            </div>
+
+            <span
+              className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                isAcceptingOrders
+                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                  : 'bg-amber-100 text-amber-900 border border-amber-300'
+              }`}
+            >
+              {isAcceptingOrders ? '🟢 Recibiendo pedidos' : '⏸️ Pedidos pausados'}
+            </span>
+          </div>
+
+          <p className="text-xs text-[#6B574B] leading-relaxed">
+            Si estás con agenda completa o fuera de horario, pausá la recepción para informar a los clientes y desactivar el botón de envío en el carrito.
+          </p>
+
+          {/* Selector de 2 opciones táctiles */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setIsAcceptingOrders(true)}
+              className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all duration-150 min-w-0 ${
+                isAcceptingOrders
+                  ? 'bg-emerald-50/80 border-emerald-500 ring-1 ring-emerald-500 shadow-xs'
+                  : 'bg-[#FAF7F2] border-[#E5DCCB] hover:bg-stone-50'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
+                <span className="font-bold text-xs sm:text-sm text-[#1D120D] truncate">
+                  Activo
+                </span>
+              </div>
+              <span className="text-[11px] text-[#6B574B] line-clamp-1">
+                Tomando pedidos normalmente
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsAcceptingOrders(false)}
+              className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all duration-150 min-w-0 ${
+                !isAcceptingOrders
+                  ? 'bg-amber-50/80 border-amber-500 ring-1 ring-amber-500 shadow-xs'
+                  : 'bg-[#FAF7F2] border-[#E5DCCB] hover:bg-stone-50'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-600 shrink-0" />
+                <span className="font-bold text-xs sm:text-sm text-[#1D120D] truncate">
+                  Pausado
+                </span>
+              </div>
+              <span className="text-[11px] text-[#6B574B] line-clamp-1">
+                Agenda completa por hoy
+              </span>
+            </button>
+          </div>
+
+          {/* Campo editable de pause_message */}
+          <div className="space-y-1.5 pt-1">
+            <label className="text-xs font-semibold text-[#3E271E] block">
+              Mensaje al cliente cuando está pausado:
+            </label>
+            <textarea
+              rows={2}
+              value={pauseMessage}
+              onChange={(e) => setPauseMessage(e.target.value)}
+              placeholder="Estamos con agenda completa por hoy. Volvemos a tomar pedidos muy pronto."
+              className="w-full bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl px-3.5 py-2 text-xs sm:text-sm text-[#1D120D] focus:outline-hidden focus:border-[#A64B2A] focus:ring-1 focus:ring-[#A64B2A]"
+            />
+            <p className="text-[11px] text-[#6B574B]">
+              Se muestra en la barra superior pública y dentro de la ventana del pedido.
+            </p>
+          </div>
+        </div>
+
         {/* Sección 1: WhatsApp Simplificado */}
         <div className="bg-white border border-[#E5DCCB] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-[#1D120D] border-b border-[#E5DCCB]/60 pb-2">
@@ -327,73 +461,73 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           </div>
         </div>
 
-        {/* Sección 4: Imagen de Lista de Precios */}
-        <div className="bg-white border border-[#E5DCCB] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-[#E5DCCB]/60 pb-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#1D120D]">
-              <FileImage className="w-4 h-4 text-[#A64B2A]" />
-              <span>Foto de Lista de Precios Oficial</span>
-            </div>
-            {formData.priceListImageUrl && (
-              <a
-                href={formData.priceListImageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-[#A64B2A] font-bold hover:underline flex items-center gap-1"
-              >
-                <span>Ver actual</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
-          </div>
-
-          <p className="text-xs text-[#6B574B] leading-relaxed">
-            Esta imagen se abre cuando los clientes tocan "Ver Lista de Precios". La compresión automática preserva la proporción completa del volante para que los textos no se corten.
-          </p>
-
-          {/* Preview de la lista */}
-          <div className="max-h-60 overflow-hidden rounded-xl border border-[#E5DCCB] bg-[#FAF7F2] flex items-center justify-center p-2">
-            {formData.priceListImageUrl ? (
-              <img
-                src={formData.priceListImageUrl}
-                alt="Lista de precios vigente"
-                className="max-h-56 w-auto object-contain rounded-lg"
-              />
-            ) : (
-              <p className="text-xs text-[#6B574B] p-6 text-center">No hay imagen cargada</p>
-            )}
-          </div>
-
-          {/* Botón táctil para subir nueva imagen */}
-          <label className="w-full cursor-pointer min-h-[44px] bg-[#FAF7F2] border border-[#E5DCCB] text-[#1D120D] px-4 py-2.5 rounded-xl font-bold text-center flex items-center justify-center gap-2 hover:bg-stone-100 active:scale-98">
-            <Camera className="w-4 h-4 text-[#A64B2A]" />
-            <span>
-              {isUploadingPriceList
-                ? 'Comprimiendo y subiendo...'
-                : 'Subir nueva foto de Lista de Precios'}
-            </span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePriceListUpload}
-              disabled={isUploadingPriceList}
-              className="sr-only"
-            />
-          </label>
-        </div>
-
-        {/* Botón Guardar Cambios */}
+        {/* Botón Guardar Cambios Generales */}
         <div className="pt-2">
           <button
             type="submit"
-            disabled={isSubmitting || isUploadingPriceList}
-            className="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm text-white bg-[#A64B2A] hover:bg-[#8C3D21] active:bg-[#78341B] shadow-sm disabled:opacity-60 flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+            className="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm text-white bg-[#A64B2A] hover:bg-[#8C3D21] active:bg-[#78341B] shadow-sm disabled:opacity-60 flex items-center justify-center gap-2 active:scale-98"
           >
             <Check className="w-4 h-4" />
             <span>{isSubmitting ? 'Guardando cambios...' : 'Guardar Configuración del Negocio'}</span>
           </button>
         </div>
       </form>
+
+      {/* =================================================================== */}
+      {/* SECCIÓN SEGURIDAD: Cambiar Contraseña de Administrador               */}
+      {/* =================================================================== */}
+      <div className="bg-white border border-[#E5DCCB] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5 mt-6">
+        <div className="flex items-center gap-2 text-xs font-bold text-[#1D120D] border-b border-[#E5DCCB]/60 pb-2">
+          <Lock className="w-4 h-4 text-[#A64B2A]" />
+          <span>Seguridad: Cambiar Contraseña de Administrador</span>
+        </div>
+
+        <p className="text-xs text-[#6B574B] leading-relaxed">
+          Actualizá la clave de acceso al panel de control de `/admin`. Mínimo 8 caracteres.
+        </p>
+
+        <form onSubmit={handleUpdatePassword} className="space-y-3 text-xs">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[#3E271E] block">
+              Nueva Contraseña (mínimo 8 caracteres)
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="••••••••"
+              minLength={8}
+              required
+              className="w-full bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl px-3.5 py-2.5 text-sm text-[#1D120D]"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[#3E271E] block">
+              Confirmar Nueva Contraseña
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+              minLength={8}
+              required
+              className="w-full bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl px-3.5 py-2.5 text-sm text-[#1D120D]"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isUpdatingPassword || !newPassword || !confirmPassword}
+            className="w-full min-h-[44px] py-2.5 px-4 rounded-xl font-bold text-xs text-[#1D120D] bg-stone-100 hover:bg-stone-200 border border-[#E5DCCB] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 active:scale-98"
+          >
+            <KeyRound className="w-4 h-4 text-[#A64B2A]" />
+            <span>{isUpdatingPassword ? 'Actualizando contraseña...' : 'Actualizar Contraseña'}</span>
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

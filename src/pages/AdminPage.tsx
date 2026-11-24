@@ -6,18 +6,20 @@ import { PriceStockTab } from '@/components/admin/PriceStockTab';
 import { ProductsTab } from '@/components/admin/ProductsTab';
 import { CombosTab } from '@/components/admin/CombosTab';
 import { BusinessSettingsTab } from '@/components/admin/BusinessSettingsTab';
+import { AnalyticsTab } from '@/components/admin/AnalyticsTab';
 import { AdminToast, type ToastMessage } from '@/components/admin/AdminToast';
 import {
   Zap,
   UtensilsCrossed,
   Layers,
   Store,
+  TrendingUp,
   ExternalLink,
   LogOut,
   RefreshCw,
 } from 'lucide-react';
 
-type AdminTab = 'express' | 'products' | 'combos' | 'business';
+type AdminTab = 'express' | 'products' | 'combos' | 'business' | 'analytics';
 
 export const AdminPage: React.FC = () => {
   const { products, combos, business, refreshCatalog, isLoading: isCatalogLoading } = useCatalog();
@@ -169,10 +171,10 @@ export const AdminPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 Pestañas Superiores contenidas con overflow-x-auto estricto */}
+        {/* 5 Pestañas Superiores contenidas con overflow-x-auto estricto */}
         <div className="w-full border-t border-white/10 overflow-x-auto scrollbar-none">
           <nav
-            className="max-w-2xl mx-auto px-1 sm:px-2 flex items-center justify-between min-w-[340px]"
+            className="max-w-2xl mx-auto px-1 sm:px-2 flex items-center justify-between min-w-[420px]"
             aria-label="Navegación del panel de administración"
           >
             <button
@@ -226,6 +228,19 @@ export const AdminPage: React.FC = () => {
               <Store className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'business' ? 'text-[#A64B2A]' : ''}`} />
               <span className="truncate">Negocio</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('analytics')}
+              className={`flex-1 min-h-[44px] py-2 px-1 text-center font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'analytics'
+                  ? 'border-[#A64B2A] text-white bg-white/5'
+                  : 'border-transparent text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <TrendingUp className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'analytics' ? 'text-[#A64B2A]' : ''}`} />
+              <span className="truncate">Métricas</span>
+            </button>
           </nav>
         </div>
       </header>
@@ -236,6 +251,7 @@ export const AdminPage: React.FC = () => {
           <PriceStockTab
             products={products}
             combos={combos}
+            business={business}
             onRefresh={refreshCatalog}
             showToast={showToast}
           />
@@ -263,6 +279,10 @@ export const AdminPage: React.FC = () => {
             onRefresh={refreshCatalog}
             showToast={showToast}
           />
+        )}
+
+        {activeTab === 'analytics' && (
+          <AnalyticsTab showToast={showToast} />
         )}
       </main>
 

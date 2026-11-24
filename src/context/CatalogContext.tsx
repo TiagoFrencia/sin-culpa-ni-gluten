@@ -148,6 +148,8 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
           deliveryHighlight: row.delivery_highlight || BUSINESS_CONFIG.deliveryHighlight,
           trustBadge: BUSINESS_CONFIG.trustBadge,
           priceListImageUrl: row.price_list_image_url || BUSINESS_CONFIG.priceListImageUrl,
+          isAcceptingOrders: typeof row.is_accepting_orders === 'boolean' ? row.is_accepting_orders : true,
+          pauseMessage: row.pause_message || BUSINESS_CONFIG.pauseMessage,
         };
         setBusiness(nextBusiness);
         updateActiveWhatsAppPhone(nextBusiness.whatsappPhone);

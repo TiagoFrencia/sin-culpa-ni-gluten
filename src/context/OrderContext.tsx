@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import type { OrderItem, OrderContextValue } from '@/types/order';
 import { buildOrderItemKey } from '@/types/order';
+import { trackMetric } from '@/utils/analytics';
+import { useCatalog } from './useCatalog';
 
 const STORAGE_KEY = 'scng_order_v1';
 
@@ -64,8 +66,96 @@ function loadInitialItems(): OrderItem[] {
 }
 
 export function OrderProvider({ children }: { children: React.ReactNode }) {
+  const { products, combos } = useCatalog();
   const [items, setItems] = useState<OrderItem[]>(loadInitialItems);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [cartAdjusted, setCartAdjusted] = useState(false);
+
+  const clearCartAdjustedNotice = useCallback(() => setCartAdjusted(false), []);
+
+  // Sincronización automática de precios y stock con el catálogo vigente
+  useEffect(() => {
+    if (products.length === 0 && combos.length === 0) return;
+
+    // oxlint-disable-next-line react/set-state-in-effect
+    setItems((prevItems) => {
+      if (prevItems.length === 0) return prevItems;
+
+      let changed = false;
+      const nextItems: OrderItem[] = [];
+
+      for (const item of prevItems) {
+        if (item.type === 'combo') {
+          const liveCombo = combos.find((c) => c.id === item.id);
+          // Si fue pausado o eliminado del catálogo, remover del carrito
+          if (!liveCombo || !liveCombo.available) {
+            changed = true;
+            continue;
+          }
+
+          const currentPrice = liveCombo.promoPrice ?? liveCombo.regularPrice;
+          if (
+            item.unitPrice !== currentPrice ||
+            item.name !== liveCombo.name ||
+            item.image !== liveCombo.image
+          ) {
+            changed = true;
+            nextItems.push({
+              ...item,
+              unitPrice: currentPrice,
+              name: liveCombo.name,
+              image: liveCombo.image,
+            });
+          } else {
+            nextItems.push(item);
+          }
+        } else {
+          // item.type === 'product'
+          const liveProduct = products.find((p) => p.id === item.id);
+          // Si fue pausado o eliminado del catálogo, remover del carrito
+          if (!liveProduct || !liveProduct.available) {
+            changed = true;
+            continue;
+          }
+
+          // Buscar la variante específica en el producto vigente
+          const liveVariant =
+            liveProduct.variants.find(
+              (v) => v.label.trim().toLowerCase() === item.variantLabel.trim().toLowerCase()
+            ) || (liveProduct.variants.length === 1 ? liveProduct.variants[0] : undefined);
+
+          // Si la variante ya no existe o pasó a precio null ("Consultar"), remover del carrito
+          if (!liveVariant || liveVariant.price === null) {
+            changed = true;
+            continue;
+          }
+
+          if (
+            item.unitPrice !== liveVariant.price ||
+            item.name !== liveProduct.name ||
+            item.image !== liveProduct.image
+          ) {
+            changed = true;
+            nextItems.push({
+              ...item,
+              unitPrice: liveVariant.price,
+              name: liveProduct.name,
+              image: liveProduct.image,
+            });
+          } else {
+            nextItems.push(item);
+          }
+        }
+      }
+
+      if (changed) {
+        setCartAdjusted(true);
+        return nextItems;
+      }
+
+      return prevItems;
+    });
+  }, [products, combos]);
 
   // Guardar en localStorage ante cambios en items
   useEffect(() => {
@@ -81,6 +171,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = useCallback(
     (itemInput: Omit<OrderItem, 'quantity' | 'itemKey'> & { quantity?: number; itemKey?: string }) => {
+      // Instrumentación silenciosa de analítica
+      trackMetric('cart_adds');
+
       const generatedKey = itemInput.itemKey || buildOrderItemKey(itemInput.id, itemInput.variantLabel, itemInput.flavor);
       const qtyToAdd = itemInput.quantity && itemInput.quantity > 0 ? itemInput.quantity : 1;
 
@@ -178,6 +271,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       totalItems,
       subtotal,
       isEmpty,
+      cartAdjusted,
+      clearCartAdjustedNotice,
     }),
     [
       items,
@@ -193,6 +288,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       totalItems,
       subtotal,
       isEmpty,
+      cartAdjusted,
+      clearCartAdjustedNotice,
     ]
   );
 

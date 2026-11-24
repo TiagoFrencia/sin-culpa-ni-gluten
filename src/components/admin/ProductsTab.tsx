@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Product, ProductCategory, ProductVariant } from '@/types/catalog';
 import { supabase } from '@/lib/supabase';
-import { compressAndUploadImage } from '@/utils/imageUpload';
+import { compressAndUploadImage, deleteOldCatalogImage } from '@/utils/imageUpload';
 import {
   Plus,
   Edit2,
@@ -12,6 +12,8 @@ import {
   AlertTriangle,
   Upload,
   Sparkles,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 
 const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [
@@ -93,6 +95,38 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   // Diálogo de confirmación de eliminación
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+
+  const handleMoveOrder = async (index: number, direction: 'up' | 'down') => {
+    if (!supabase) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= products.length) return;
+
+    const current = products[index];
+    const target = products[targetIndex];
+
+    try {
+      setIsReordering(true);
+      let currentOrder = current.sortOrder ?? index * 10;
+      let targetOrder = target.sortOrder ?? targetIndex * 10;
+      if (currentOrder === targetOrder) {
+        currentOrder = index * 10;
+        targetOrder = targetIndex * 10;
+      }
+
+      await Promise.all([
+        supabase.from('products').update({ sort_order: targetOrder }).eq('id', current.id),
+        supabase.from('products').update({ sort_order: currentOrder }).eq('id', target.id),
+      ]);
+
+      showToast(`Posición de "${current.name}" actualizada`, 'success');
+      await onRefresh();
+    } catch (err) {
+      showToast(`Error al reordenar: ${(err as Error).message}`, 'error');
+    } finally {
+      setIsReordering(false);
+    }
+  };
 
   const handleOpenCreate = () => {
     setEditingProduct(null);
@@ -229,7 +263,11 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
       };
 
       if (editingProduct) {
-        // Actualizar
+        // Si se cambió la foto y la anterior estaba en el bucket, borrarla
+        if (editingProduct.image !== formData.image) {
+          await deleteOldCatalogImage(editingProduct.image);
+        }
+
         const { error } = await supabase
           .from('products')
           .update(payload)
@@ -270,6 +308,12 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
       setIsDeleting(true);
       const { error } = await supabase.from('products').delete().eq('id', productToDelete.id);
       if (error) throw error;
+
+      // Limpieza de storage si era una foto subida a catalog-images
+      if (productToDelete.image) {
+        await deleteOldCatalogImage(productToDelete.image);
+      }
+
       showToast(`Producto "${productToDelete.name}" eliminado`, 'success');
       setProductToDelete(null);
       await onRefresh();
@@ -321,7 +365,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
 
       {/* Lista de Productos */}
       <div className="space-y-3">
-        {products.map((prod) => (
+        {products.map((prod, idx) => (
           <div
             key={prod.id}
             className="bg-white border border-[#E5DCCB] rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col gap-2.5 min-w-0"
@@ -384,20 +428,43 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
               ))}
             </div>
 
-            {/* Botones de Acción: Editar protagonista (flex-1) y Eliminar compacto (w-11) */}
-            <div className="flex items-center gap-2 pt-2 border-t border-[#E5DCCB]/60">
+            {/* Botones de Acción: Editar, Reordenar (↑ / ↓) y Eliminar compacto */}
+            <div className="flex items-center gap-1.5 pt-2 border-t border-[#E5DCCB]/60">
               <button
                 type="button"
                 onClick={() => handleOpenEdit(prod)}
-                className="flex-1 min-h-[44px] px-3 py-2 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-xs font-bold text-[#1D120D] flex items-center justify-center gap-1.5 transition-colors shadow-2xs active:scale-98"
+                className="flex-1 min-h-[44px] px-2.5 py-2 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-xs font-bold text-[#1D120D] flex items-center justify-center gap-1 transition-colors shadow-2xs active:scale-98 min-w-0"
               >
-                <Edit2 className="w-3.5 h-3.5 text-[#A64B2A]" />
-                <span>Editar producto</span>
+                <Edit2 className="w-3.5 h-3.5 text-[#A64B2A] shrink-0" />
+                <span className="truncate">Editar</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => handleMoveOrder(idx, 'up')}
+                disabled={idx === 0 || isReordering}
+                aria-label={`Subir posición de ${prod.name}`}
+                title="Subir posición"
+                className="w-10 h-11 shrink-0 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-[#1D120D] flex items-center justify-center transition-colors active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleMoveOrder(idx, 'down')}
+                disabled={idx === products.length - 1 || isReordering}
+                aria-label={`Bajar posición de ${prod.name}`}
+                title="Bajar posición"
+                className="w-10 h-11 shrink-0 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-[#1D120D] flex items-center justify-center transition-colors active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ArrowDown className="w-4 h-4" />
+              </button>
+
               <button
                 type="button"
                 onClick={() => setProductToDelete(prod)}
-                className="w-11 h-11 shrink-0 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors active:scale-95"
+                className="w-10 h-11 shrink-0 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors active:scale-95"
                 aria-label="Eliminar producto"
                 title={`Eliminar ${prod.name}`}
               >

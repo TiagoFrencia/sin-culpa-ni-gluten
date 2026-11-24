@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Combo } from '@/types/catalog';
 import { supabase } from '@/lib/supabase';
-import { compressAndUploadImage } from '@/utils/imageUpload';
+import { compressAndUploadImage, deleteOldCatalogImage } from '@/utils/imageUpload';
 import {
   Plus,
   Edit2,
@@ -12,6 +12,8 @@ import {
   AlertTriangle,
   Upload,
   Package,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 
 interface CombosTabProps {
@@ -79,6 +81,38 @@ export const CombosTab: React.FC<CombosTabProps> = ({
   // Confirmación de eliminación
   const [comboToDelete, setComboToDelete] = useState<Combo | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+
+  const handleMoveOrder = async (index: number, direction: 'up' | 'down') => {
+    if (!supabase) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= combos.length) return;
+
+    const current = combos[index];
+    const target = combos[targetIndex];
+
+    try {
+      setIsReordering(true);
+      let currentOrder = current.sortOrder ?? index * 10;
+      let targetOrder = target.sortOrder ?? targetIndex * 10;
+      if (currentOrder === targetOrder) {
+        currentOrder = index * 10;
+        targetOrder = targetIndex * 10;
+      }
+
+      await Promise.all([
+        supabase.from('combos').update({ sort_order: targetOrder }).eq('id', current.id),
+        supabase.from('combos').update({ sort_order: currentOrder }).eq('id', target.id),
+      ]);
+
+      showToast(`Posición de combo "${current.name}" actualizada`, 'success');
+      await onRefresh();
+    } catch (err) {
+      showToast(`Error al reordenar combo: ${(err as Error).message}`, 'error');
+    } finally {
+      setIsReordering(false);
+    }
+  };
 
   const handleOpenCreate = () => {
     setEditingCombo(null);
@@ -183,6 +217,10 @@ export const CombosTab: React.FC<CombosTabProps> = ({
       };
 
       if (editingCombo) {
+        if (editingCombo.image !== formData.image) {
+          await deleteOldCatalogImage(editingCombo.image);
+        }
+
         const { error } = await supabase
           .from('combos')
           .update(payload)
@@ -221,6 +259,11 @@ export const CombosTab: React.FC<CombosTabProps> = ({
       setIsDeleting(true);
       const { error } = await supabase.from('combos').delete().eq('id', comboToDelete.id);
       if (error) throw error;
+
+      if (comboToDelete.image) {
+        await deleteOldCatalogImage(comboToDelete.image);
+      }
+
       showToast(`Combo "${comboToDelete.name}" eliminado`, 'success');
       setComboToDelete(null);
       await onRefresh();
@@ -272,7 +315,7 @@ export const CombosTab: React.FC<CombosTabProps> = ({
 
       {/* Lista de Combos */}
       <div className="space-y-3">
-        {combos.map((combo) => (
+        {combos.map((combo, idx) => (
           <div
             key={combo.id}
             className="bg-white border border-[#E5DCCB] rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col gap-2.5 min-w-0"
@@ -349,20 +392,43 @@ export const CombosTab: React.FC<CombosTabProps> = ({
               )}
             </div>
 
-            {/* Botones de Acción: Editar protagonista (flex-1) y Eliminar compacto (w-11) */}
-            <div className="flex items-center gap-2 pt-2 border-t border-[#E5DCCB]/60">
+            {/* Botones de Acción: Editar, Reordenar (↑ / ↓) y Eliminar compacto */}
+            <div className="flex items-center gap-1.5 pt-2 border-t border-[#E5DCCB]/60">
               <button
                 type="button"
                 onClick={() => handleOpenEdit(combo)}
-                className="flex-1 min-h-[44px] px-3 py-2 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-xs font-bold text-[#1D120D] flex items-center justify-center gap-1.5 transition-colors shadow-2xs active:scale-98"
+                className="flex-1 min-h-[44px] px-2.5 py-2 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-xs font-bold text-[#1D120D] flex items-center justify-center gap-1 transition-colors shadow-2xs active:scale-98 min-w-0"
               >
-                <Edit2 className="w-3.5 h-3.5 text-[#A64B2A]" />
-                <span>Editar combo</span>
+                <Edit2 className="w-3.5 h-3.5 text-[#A64B2A] shrink-0" />
+                <span className="truncate">Editar</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => handleMoveOrder(idx, 'up')}
+                disabled={idx === 0 || isReordering}
+                aria-label={`Subir posición de combo ${combo.name}`}
+                title="Subir posición"
+                className="w-10 h-11 shrink-0 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-[#1D120D] flex items-center justify-center transition-colors active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleMoveOrder(idx, 'down')}
+                disabled={idx === combos.length - 1 || isReordering}
+                aria-label={`Bajar posición de combo ${combo.name}`}
+                title="Bajar posición"
+                className="w-10 h-11 shrink-0 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-[#1D120D] flex items-center justify-center transition-colors active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ArrowDown className="w-4 h-4" />
+              </button>
+
               <button
                 type="button"
                 onClick={() => setComboToDelete(combo)}
-                className="w-11 h-11 shrink-0 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors active:scale-95"
+                className="w-10 h-11 shrink-0 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors active:scale-95"
                 aria-label="Eliminar combo"
                 title={`Eliminar combo ${combo.name}`}
               >

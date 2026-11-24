@@ -28,9 +28,35 @@ async function verifyAdmin() {
   try {
     const page = await browser.newPage();
 
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const url = req.url();
+      // Simular tablas de analíticas vacías si aún no se corrió la migración V3 en la nube
+      if (url.includes('/rest/v1/order_intents') || url.includes('/rest/v1/daily_metrics')) {
+        req.respond({
+          status: 200,
+          contentType: 'application/json',
+          headers: {
+            'access-control-allow-origin': '*',
+            'access-control-allow-headers': '*',
+            'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          },
+          body: JSON.stringify([]),
+        });
+      } else {
+        req.continue();
+      }
+    });
+
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
-        consoleErrors.push(`[Console Error] ${msg.text()}`);
+        consoleErrors.push(`[Console Error] ${msg.text()} (${msg.location()?.url || 'no-url'})`);
+      }
+    });
+
+    page.on('response', (res) => {
+      if (res.status() >= 400) {
+        console.log(`  [HTTP ${res.status()}] ${res.url()}`);
       }
     });
 
@@ -330,6 +356,50 @@ async function verifyAdmin() {
 
       await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-07-business.png`) });
       console.log(`  ✓ Captura guardada: admin-${vp.width}-07-business.png`);
+
+      // 5. Tab 5: Métricas del Negocio (Fase 10)
+      console.log(`\n--- [${vp.name}] Tab 5: Métricas del Negocio ---`);
+      await page.evaluate(() => {
+        const navButtons = Array.from(document.querySelectorAll('nav button'));
+        const tabBtn = navButtons.find((b) => b.innerText.includes('Métricas'));
+        if (tabBtn) tabBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 600));
+      await checkOverflow(`Tab 5 Métricas ${vp.name}`);
+
+      // Comprobar elementos clave de analíticas y contabilidad
+      const analyticsCheck = await page.evaluate(() => {
+        const text = document.body.innerText.toLowerCase();
+        return {
+          hasHeader: text.includes('métricas del negocio'),
+          hasConfirmedSales: text.includes('ventas confirmadas'),
+          hasPending: text.includes('por confirmar'),
+          hasTicket: text.includes('ticket promedio'),
+          hasFunnel: text.includes('embudo de conversión') || text.includes('visitas'),
+          hasRanking: text.includes('ranking de platos'),
+          hasReconciliation: text.includes('conciliación de pedidos'),
+          hasExportCSV: Boolean(
+            document.querySelector('button[title*="CSV"]') ||
+            Array.from(document.querySelectorAll('button')).some((b) => b.innerText.toLowerCase().includes('exportar csv'))
+          ),
+        };
+      });
+
+      console.log(`  [Analytics Tab Check] Header: ${analyticsCheck.hasHeader}, Ventas Confirmadas: ${analyticsCheck.hasConfirmedSales}, Ticket: ${analyticsCheck.hasTicket}, Embudo: ${analyticsCheck.hasFunnel}, Ranking: ${analyticsCheck.hasRanking}, Export CSV: ${analyticsCheck.hasExportCSV}`);
+
+      if (
+        !analyticsCheck.hasHeader ||
+        !analyticsCheck.hasConfirmedSales ||
+        !analyticsCheck.hasPending ||
+        !analyticsCheck.hasTicket ||
+        !analyticsCheck.hasRanking ||
+        !analyticsCheck.hasExportCSV
+      ) {
+        throw new Error('La pestaña Métricas no contiene todos los módulos contables requeridos');
+      }
+
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-08-analytics.png`) });
+      console.log(`  ✓ Captura guardada: admin-${vp.width}-08-analytics.png`);
     }
 
     // -------------------------------------------------------------------------
