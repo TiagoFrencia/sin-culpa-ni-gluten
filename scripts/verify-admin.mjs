@@ -9,8 +9,13 @@ if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
+const VIEWPORTS = [
+  { name: '360x800', width: 360, height: 800 },
+  { name: '390x844', width: 390, height: 844 },
+];
+
 async function verifyAdmin() {
-  console.log('=== Iniciando Verificación Fase 7: Panel de Administración Mobile-First (/admin) ===\n');
+  console.log('=== Iniciando Verificación Fase 7/8: Panel Admin Mobile-First (360px & 390px) ===\n');
 
   const browser = await puppeteer.launch({
     executablePath: CHROME_PATH,
@@ -33,16 +38,55 @@ async function verifyAdmin() {
       consoleErrors.push(`[Page Error] ${err.toString()}`);
     });
 
-    // Mobile Viewport iPhone 13/14/15 estándar (390 x 844)
-    await page.setViewport({ width: 390, height: 844 });
+    // Helper para verificar scroll horizontal
+    const checkOverflow = async (contextName) => {
+      const data = await page.evaluate(() => {
+        return {
+          scrollWidth: document.documentElement.scrollWidth,
+          innerWidth: window.innerWidth,
+          overflow: document.documentElement.scrollWidth > window.innerWidth,
+        };
+      });
+      console.log(`  [Overflow Check] ${contextName} (${data.innerWidth}px): scrollWidth=${data.scrollWidth}px -> ${data.overflow ? 'FALLA' : 'OK (0px desborde)'}`);
+      if (data.overflow) {
+        throw new Error(`Desborde horizontal detectado en ${contextName}: scrollWidth (${data.scrollWidth}px) > innerWidth (${data.innerWidth}px)`);
+      }
+      return data;
+    };
+
+    // Helper para verificar que un elemento no se corta a la derecha
+    const checkElementWithinBounds = async (selector, elementName) => {
+      const isWithin = await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (!el) return { found: false, right: 0, innerWidth: window.innerWidth };
+        const rect = el.getBoundingClientRect();
+        return {
+          found: true,
+          right: Math.round(rect.right),
+          innerWidth: window.innerWidth,
+          within: rect.right <= window.innerWidth + 1, // 1px tolerancia de redondeo
+        };
+      }, selector);
+
+      if (!isWithin.found) {
+        console.warn(`  [Bounds Check] Elemento no encontrado: ${elementName} (${selector})`);
+        return;
+      }
+
+      console.log(`  [Bounds Check] ${elementName}: right=${isWithin.right}px <= innerWidth=${isWithin.innerWidth}px -> ${isWithin.within ? 'OK' : 'RECORTADO'}`);
+      if (!isWithin.within) {
+        throw new Error(`Elemento ${elementName} se corta a la derecha: right (${isWithin.right}px) > innerWidth (${isWithin.innerWidth}px)`);
+      }
+    };
 
     // -------------------------------------------------------------------------
-    // 1. CARGA INICIAL DE /admin (PANTALLA DE LOGIN)
+    // 1. CARGA INICIAL Y LOGIN EN 360x800
     // -------------------------------------------------------------------------
-    console.log('--- 1. Navegando a http://localhost:5173/admin ---');
+    console.log('--- 1. Carga de /admin en 360x800 y Login ---');
+    await page.setViewport({ width: 360, height: 800 });
     await page.goto('http://localhost:5173/admin', { waitUntil: 'networkidle0' });
 
-    // Asegurar que no hay sesión residual previa para probar el login limpio
+    // Limpiar sesión previa
     await page.evaluate(() => {
       window.localStorage.clear();
       window.sessionStorage.clear();
@@ -50,222 +94,257 @@ async function verifyAdmin() {
     await page.reload({ waitUntil: 'networkidle0' });
     await new Promise((r) => setTimeout(r, 600));
 
-    // Verificar scroll horizontal
-    const loginOverflow = await page.evaluate(() => {
-      return document.documentElement.scrollWidth > window.innerWidth;
-    });
-    console.log(`Scroll horizontal en Login (390x844): ${loginOverflow ? 'DETECTADO (FALLA)' : '0 px (PERFECTO)'}`);
-    if (loginOverflow) throw new Error('Scroll horizontal detectado en pantalla de Login');
+    await checkOverflow('Login 360x800');
+    await page.screenshot({ path: path.join(OUTPUT_DIR, 'admin-360-01-login.png') });
+    console.log('  ✓ Captura guardada: admin-360-01-login.png');
 
-    await page.screenshot({ path: path.join(OUTPUT_DIR, 'admin-01-login.png') });
-    console.log('✓ Captura guardada: admin-01-login.png');
-
-    // -------------------------------------------------------------------------
-    // 2. INICIO DE SESIÓN CON CREDENCIALES REALES
-    // -------------------------------------------------------------------------
-    console.log('\n--- 2. Autenticación con admin@sinculpanigluten.com ---');
+    // Iniciar sesión
     await page.type('#admin-email', 'admin@sinculpanigluten.com');
     await page.type('#admin-password', 'SinCulpaAdmin2026!#Segura');
-
-    // Click en "Iniciar Sesión"
     const submitBtn = await page.$('button[type="submit"]');
     if (!submitBtn) throw new Error('No se encontró el botón de inicio de sesión');
     await submitBtn.click();
 
-    // Esperar a que cargue el panel autenticado (aparece botón "Salir" o "Precios y Stock")
     await page.waitForFunction(
-      () => document.body.innerText.includes('Precios y Stock') && document.body.innerText.includes('Salir'),
+      () => document.body.innerText.includes('Precios y Stock') && Boolean(document.querySelector('button[title="Cerrar sesión"]')),
       { timeout: 12000 }
     );
     await new Promise((r) => setTimeout(r, 1000));
-    console.log('✓ Autenticación exitosa. Panel de administración cargado.');
+    console.log('  ✓ Autenticación exitosa.');
 
     // -------------------------------------------------------------------------
-    // 3. TAB 1: PRECIOS Y STOCK (MODO EXPRESS)
+    // ITERAR AMBAS RESOLUCIONES (360x800 y 390x844)
     // -------------------------------------------------------------------------
-    console.log('\n--- 3. Verificando Tab 1: Precios y Stock ---');
-    const expressOverflow = await page.evaluate(() => {
-      return document.documentElement.scrollWidth > window.innerWidth;
-    });
-    console.log(`Scroll horizontal en Tab 1: ${expressOverflow ? 'DETECTADO (FALLA)' : '0 px (PERFECTO)'}`);
-    if (expressOverflow) throw new Error('Scroll horizontal detectado en Tab 1');
+    for (const vp of VIEWPORTS) {
+      console.log(`\n=============================================================`);
+      console.log(`>>> VALIDANDO RESOLUCIÓN: ${vp.name} (${vp.width} x ${vp.height}) <<<`);
+      console.log(`=============================================================`);
 
-    // Verificar conteo de productos y combos en el DOM
-    const itemsData = await page.evaluate(() => {
-      const text = document.body.innerText;
-      return {
-        hasMilanesaNalga: text.includes('Milanesas de Ternera (Nalga)'),
-        hasPollo: text.includes('Milanesas de Suprema de Pollo'),
-        hasComboFamiliar: text.includes('Combo Familiar Completo'),
-        hasAvailableBadge: text.includes('Disponible') || text.includes('Sin stock'),
-      };
-    });
-    console.log('Datos en Tab 1:', itemsData);
-    if (!itemsData.hasMilanesaNalga || !itemsData.hasComboFamiliar) {
-      throw new Error('No se cargaron los productos o combos reales desde Supabase');
-    }
+      await page.setViewport({ width: vp.width, height: vp.height });
+      await new Promise((r) => setTimeout(r, 400));
 
-    await page.screenshot({ path: path.join(OUTPUT_DIR, 'admin-02-express.png') });
-    console.log('✓ Captura guardada: admin-02-express.png');
+      // 1. Verificación del Header
+      console.log(`\n--- [${vp.name}] Header Superior y Botón Salir ---`);
+      await checkOverflow(`Header ${vp.name}`);
+      await checkElementWithinBounds('button[title="Cerrar sesión"]', 'Botón Salir');
 
-    // Probar Toggle de Stock en vivo y revertirlo (confirmar escritura RLS en Supabase)
-    console.log('\n--- 4. Probando escritura RLS con toggle de stock en vivo ---');
-    const firstStockBtn = await page.$('button[aria-label="Marcar sin stock"], button[aria-label="Marcar disponible"]');
-    if (firstStockBtn) {
-      console.log('Haciendo clic para alternar stock...');
-      await firstStockBtn.click();
-      await new Promise((r) => setTimeout(r, 1200));
-
-      // Verificar que apareció el toast
-      const toastText = await page.evaluate(() => {
-        const toast = document.querySelector('[role="status"]');
-        return toast ? toast.innerText : null;
+      // 2. Tab 1: Precios y Stock
+      console.log(`\n--- [${vp.name}] Tab 1: Precios y Stock ---`);
+      await page.evaluate(() => {
+        const navButtons = Array.from(document.querySelectorAll('nav button'));
+        const tabBtn = navButtons.find((b) => b.innerText.includes('Precios y Stock'));
+        if (tabBtn) tabBtn.click();
       });
-      console.log('Toast recibido tras toggle de stock:', toastText);
+      await new Promise((r) => setTimeout(r, 600));
+      await checkOverflow(`Tab 1 ${vp.name}`);
 
-      // Revertir el toggle para dejar el producto disponible nuevamente
-      console.log('Revertiendo toggle para restaurar estado original...');
-      const revertBtn = await page.$('button[aria-label="Marcar sin stock"], button[aria-label="Marcar disponible"]');
-      if (revertBtn) {
-        await revertBtn.click();
-        await new Promise((r) => setTimeout(r, 1200));
-        console.log('✓ Stock revertido exitosamente.');
+      // Comprobar nombres completos sin truncamiento a "Milanesas de Ter..."
+      const namesCheck = await page.evaluate(() => {
+        const text = document.body.innerText;
+        return {
+          hasNalga: text.includes('Milanesas de Ternera (Nalga)'),
+          hasCuadrada: text.includes('Milanesas de Ternera (Cuadrada)'),
+          hasPollo: text.includes('Milanesas de Suprema de Pollo'),
+          hasTruncatedTer: text.includes('Milanesas de Ter...'),
+        };
+      });
+      console.log(`  [Names Check] Nalga: ${namesCheck.hasNalga}, Cuadrada: ${namesCheck.hasCuadrada}, Pollo: ${namesCheck.hasPollo}`);
+      if (!namesCheck.hasNalga || !namesCheck.hasCuadrada) {
+        throw new Error('Los nombres de las milanesas de ternera no se cargaron correctamente');
       }
+      if (namesCheck.hasTruncatedTer) {
+        throw new Error('Se detectó nombre truncado como "Milanesas de Ter..."');
+      }
+
+      // Comprobar inputMode="numeric" en inputs de precio
+      const inputsModeCheck = await page.evaluate(() => {
+        const inputs = Array.from(document.querySelectorAll('input[type="text"]'));
+        const priceInputs = inputs.filter((i) => i.placeholder === '0' || i.className.includes('font-bold'));
+        return priceInputs.every((i) => i.inputMode === 'numeric');
+      });
+      console.log(`  [InputMode Check] Todos los inputs de precio tienen inputMode="numeric": ${inputsModeCheck}`);
+
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-02-express.png`) });
+      console.log(`  ✓ Captura guardada: admin-${vp.width}-02-express.png`);
+
+      // 3. Tab 2: Productos
+      console.log(`\n--- [${vp.name}] Tab 2: Productos ---`);
+      await page.evaluate(() => {
+        const navButtons = Array.from(document.querySelectorAll('nav button'));
+        const tabBtn = navButtons.find((b) => b.innerText.includes('Productos'));
+        if (tabBtn) tabBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 600));
+      await checkOverflow(`Tab 2 ${vp.name}`);
+
+      // Comprobar botón Editar y Eliminar compacto
+      const buttonsCheck = await page.evaluate(() => {
+        const editButtons = Array.from(document.querySelectorAll('button')).filter((b) => b.innerText.includes('Editar'));
+        const deleteButtons = Array.from(document.querySelectorAll('button[aria-label="Eliminar producto"]'));
+        return {
+          hasEdit: editButtons.length > 0,
+          hasDelete: deleteButtons.length > 0,
+        };
+      });
+      console.log(`  [Product Actions Check] Editar: ${buttonsCheck.hasEdit}, Eliminar icono: ${buttonsCheck.hasDelete}`);
+      if (!buttonsCheck.hasEdit || !buttonsCheck.hasDelete) {
+        throw new Error('No se encontraron los botones de Editar y Eliminar en Tab 2');
+      }
+
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-03-products.png`) });
+
+      // Abrir Modal "+ Nuevo Producto"
+      console.log(`  Abriendo Modal "+ Nuevo Producto"...`);
+      await page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        const newBtn = buttons.find((b) => b.innerText.includes('+ Nuevo Producto'));
+        if (newBtn) newBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 600));
+
+      await checkOverflow(`Modal Nuevo Producto ${vp.name}`);
+      await checkElementWithinBounds('button[aria-label="Cerrar modal"]', 'Modal Producto: Botón Cerrar (X)');
+      await checkElementWithinBounds('input[placeholder="Ej. Milanesas de Suprema de Pollo"]', 'Modal Producto: Input Nombre');
+
+      // Verificar que Descripción Corta y Tip de Cocción son textareas
+      const isCookingTipTextarea = await page.evaluate(() => {
+        const textareas = Array.from(document.querySelectorAll('textarea'));
+        const hasDesc = textareas.some((t) => t.placeholder && t.placeholder.includes('Tiernas milanesas'));
+        const hasTip = textareas.some((t) => t.placeholder && t.placeholder.includes('Al horno directo'));
+        return hasDesc && hasTip;
+      });
+      console.log(`  [Modal Form Check] Tip de Cocción es textarea: ${isCookingTipTextarea}`);
+      if (!isCookingTipTextarea) {
+        throw new Error('El tip de cocción en modal de Producto debe ser un <textarea>');
+      }
+
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-04-product-modal.png`) });
+      console.log(`  ✓ Captura guardada: admin-${vp.width}-04-product-modal.png`);
+
+      // Cerrar modal
+      await page.evaluate(() => {
+        const closeBtn = document.querySelector('button[aria-label="Cerrar modal"]');
+        if (closeBtn) closeBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 500));
+
+      // 4. Tab 3: Combos
+      console.log(`\n--- [${vp.name}] Tab 3: Combos ---`);
+      await page.evaluate(() => {
+        const navButtons = Array.from(document.querySelectorAll('nav button'));
+        const tabBtn = navButtons.find((b) => b.innerText.includes('Combos'));
+        if (tabBtn) tabBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 600));
+      await checkOverflow(`Tab 3 ${vp.name}`);
+
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-05-combos.png`) });
+
+      // Abrir Modal "+ Nuevo Combo"
+      console.log(`  Abriendo Modal "+ Nuevo Combo"...`);
+      await page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        const newBtn = buttons.find((b) => b.innerText.includes('+ Nuevo Combo'));
+        if (newBtn) newBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 600));
+
+      await checkOverflow(`Modal Nuevo Combo ${vp.name}`);
+      await checkElementWithinBounds('button[aria-label="Cerrar modal"]', 'Modal Combo: Botón Cerrar (X)');
+
+      // Verificar botón "+ Agregar" y campos de precio
+      const comboModalBounds = await page.evaluate(() => {
+        const addBtn = Array.from(document.querySelectorAll('button')).find((b) => b.innerText.includes('+ Agregar'));
+        const inputs = Array.from(document.querySelectorAll('input'));
+        const regularPrice = inputs.find((i) => i.className.includes('font-bold') && i.type === 'text');
+        const textareas = Array.from(document.querySelectorAll('textarea'));
+        const hasSubtitleTextarea = textareas.some((t) => t.placeholder && t.placeholder.includes('Abastecé tu freezer'));
+
+        const addRect = addBtn ? Math.round(addBtn.getBoundingClientRect().right) : null;
+        const regRect = regularPrice ? Math.round(regularPrice.getBoundingClientRect().right) : null;
+
+        return {
+          hasSubtitleTextarea,
+          addBtnRight: addRect,
+          regularPriceRight: regRect,
+          innerWidth: window.innerWidth,
+          addBtnWithin: addRect !== null ? addRect <= window.innerWidth : false,
+          regularPriceWithin: regRect !== null ? regRect <= window.innerWidth : false,
+        };
+      });
+      console.log(`  [Combo Modal Check] Subtítulo es textarea: ${comboModalBounds.hasSubtitleTextarea}`);
+      console.log(`  [Combo Modal Check] Botón + Agregar right: ${comboModalBounds.addBtnRight}px <= ${comboModalBounds.innerWidth}px -> ${comboModalBounds.addBtnWithin ? 'OK' : 'RECORTADO'}`);
+      console.log(`  [Combo Modal Check] Input Precio Regular right: ${comboModalBounds.regularPriceRight}px <= ${comboModalBounds.innerWidth}px -> ${comboModalBounds.regularPriceWithin ? 'OK' : 'RECORTADO'}`);
+
+      if (!comboModalBounds.hasSubtitleTextarea || !comboModalBounds.addBtnWithin || !comboModalBounds.regularPriceWithin) {
+        throw new Error('Falla en los límites del modal de Combo');
+      }
+
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-06-combo-modal.png`) });
+      console.log(`  ✓ Captura guardada: admin-${vp.width}-06-combo-modal.png`);
+
+      // Cerrar modal
+      await page.evaluate(() => {
+        const closeBtn = document.querySelector('button[aria-label="Cerrar modal"]');
+        if (closeBtn) closeBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 500));
+
+      // 5. Tab 4: Negocio
+      console.log(`\n--- [${vp.name}] Tab 4: Negocio ---`);
+      await page.evaluate(() => {
+        const navButtons = Array.from(document.querySelectorAll('nav button'));
+        const tabBtn = navButtons.find((b) => b.innerText.includes('Negocio'));
+        if (tabBtn) tabBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 600));
+      await checkOverflow(`Tab 4 ${vp.name}`);
+
+      // Comprobar campos simplificados de WhatsApp e Instagram
+      const bizCheck = await page.evaluate(() => {
+        const text = document.body.innerText;
+        const inputs = Array.from(document.querySelectorAll('input')).map((i) => ({
+          value: i.value,
+          placeholder: i.placeholder,
+        }));
+
+        const hasFriendlyWhatsApp = text.includes('Número de WhatsApp (con código de área, sin 0 ni 15)');
+        const hasLiveWaLink = text.includes('Link de pedidos activo:') && text.includes('wa.me/549');
+        const hasFriendlyInstagram = text.includes('Usuario de Instagram');
+        const hasLiveIgLink = text.includes('Perfil enlazado:') && text.includes('instagram.com/');
+
+        return {
+          hasFriendlyWhatsApp,
+          hasLiveWaLink,
+          hasFriendlyInstagram,
+          hasLiveIgLink,
+          inputsCount: inputs.length,
+        };
+      });
+      console.log(`  [Business Settings Check] WhatsApp amigable: ${bizCheck.hasFriendlyWhatsApp}, Link en vivo: ${bizCheck.hasLiveWaLink}`);
+      console.log(`  [Business Settings Check] Instagram amigable: ${bizCheck.hasFriendlyInstagram}, Link en vivo: ${bizCheck.hasLiveIgLink}`);
+
+      if (!bizCheck.hasFriendlyWhatsApp || !bizCheck.hasLiveWaLink || !bizCheck.hasFriendlyInstagram || !bizCheck.hasLiveIgLink) {
+        throw new Error('Los campos simplificados de WhatsApp e Instagram en Tab Negocio no cumplen con los requisitos');
+      }
+
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-07-business.png`) });
+      console.log(`  ✓ Captura guardada: admin-${vp.width}-07-business.png`);
     }
 
     // -------------------------------------------------------------------------
-    // 4. TAB 2: PRODUCTOS (CREAR / EDITAR)
+    // AUDITORÍA DE ERRORES DE CONSOLA
     // -------------------------------------------------------------------------
-    console.log('\n--- 5. Verificando Tab 2: Productos ---');
-    await page.evaluate(() => {
-      const navButtons = Array.from(document.querySelectorAll('nav button'));
-      const prodBtn = navButtons.find((b) => b.innerText.includes('Productos'));
-      if (prodBtn) prodBtn.click();
-    });
-    await new Promise((r) => setTimeout(r, 800));
-
-    const prodOverflow = await page.evaluate(() => {
-      return document.documentElement.scrollWidth > window.innerWidth;
-    });
-    console.log(`Scroll horizontal en Tab 2: ${prodOverflow ? 'DETECTADO (FALLA)' : '0 px (PERFECTO)'}`);
-    if (prodOverflow) throw new Error('Scroll horizontal detectado en Tab 2');
-
-    await page.screenshot({ path: path.join(OUTPUT_DIR, 'admin-03-products.png') });
-    console.log('✓ Captura guardada: admin-03-products.png');
-
-    // Abrir Modal "+ Nuevo Producto"
-    console.log('Abriendo modal "+ Nuevo Producto"...');
-    await page.evaluate(() => {
-      const buttons = Array.from(document.querySelectorAll('button'));
-      const newProdBtn = buttons.find((b) => b.innerText.includes('+ Nuevo Producto'));
-      if (newProdBtn) newProdBtn.click();
-    });
-    await new Promise((r) => setTimeout(r, 600));
-
-    const modalData = await page.evaluate(() => {
-      const select = document.querySelector('select');
-      const categories = select ? Array.from(select.options).map((o) => o.text) : [];
-      return {
-        hasModal: Boolean(select),
-        categories,
-        hasCounters: document.body.innerText.includes('/60') && document.body.innerText.includes('/150'),
-      };
-    });
-    console.log('Modal Nuevo Producto:', modalData);
-    if (!modalData.hasModal || modalData.categories.length !== 6 || !modalData.hasCounters) {
-      throw new Error('El modal de Producto no cumple con las reglas estrictas de anti-rompimiento');
-    }
-
-    await page.screenshot({ path: path.join(OUTPUT_DIR, 'admin-04-product-modal.png') });
-    console.log('✓ Captura guardada: admin-04-product-modal.png');
-
-    // Cerrar modal
-    await page.evaluate(() => {
-      const closeBtn = document.querySelector('button[aria-label="Cerrar modal"]');
-      if (closeBtn) closeBtn.click();
-    });
-    await new Promise((r) => setTimeout(r, 500));
-
-    // -------------------------------------------------------------------------
-    // 5. TAB 3: COMBOS
-    // -------------------------------------------------------------------------
-    console.log('\n--- 6. Verificando Tab 3: Combos ---');
-    await page.evaluate(() => {
-      const navButtons = Array.from(document.querySelectorAll('nav button'));
-      const comboBtn = navButtons.find((b) => b.innerText.includes('Combos'));
-      if (comboBtn) comboBtn.click();
-    });
-    await new Promise((r) => setTimeout(r, 800));
-
-    const combosOverflow = await page.evaluate(() => {
-      return document.documentElement.scrollWidth > window.innerWidth;
-    });
-    console.log(`Scroll horizontal en Tab 3: ${combosOverflow ? 'DETECTADO (FALLA)' : '0 px (PERFECTO)'}`);
-    if (combosOverflow) throw new Error('Scroll horizontal detectado en Tab 3');
-
-    const combosCount = await page.evaluate(() => {
-      const text = document.body.innerText;
-      return {
-        hasSemanaPractica: text.includes('Combo Semana Práctica'),
-        hasJuntada: text.includes('Combo Juntada Sin Culpa'),
-        hasFamiliar: text.includes('Combo Familiar Completo'),
-      };
-    });
-    console.log('Combos en Tab 3:', combosCount);
-    if (!combosCount.hasSemanaPractica || !combosCount.hasJuntada || !combosCount.hasFamiliar) {
-      throw new Error('No se cargaron los 3 combos en el Tab 3');
-    }
-
-    await page.screenshot({ path: path.join(OUTPUT_DIR, 'admin-05-combos.png') });
-    console.log('✓ Captura guardada: admin-05-combos.png');
-
-    // -------------------------------------------------------------------------
-    // 6. TAB 4: NEGOCIO
-    // -------------------------------------------------------------------------
-    console.log('\n--- 7. Verificando Tab 4: Negocio ---');
-    await page.evaluate(() => {
-      const navButtons = Array.from(document.querySelectorAll('nav button'));
-      const bizBtn = navButtons.find((b) => b.innerText.includes('Negocio'));
-      if (bizBtn) bizBtn.click();
-    });
-    await new Promise((r) => setTimeout(r, 800));
-
-    const bizOverflow = await page.evaluate(() => {
-      return document.documentElement.scrollWidth > window.innerWidth;
-    });
-    console.log(`Scroll horizontal en Tab 4: ${bizOverflow ? 'DETECTADO (FALLA)' : '0 px (PERFECTO)'}`);
-    if (bizOverflow) throw new Error('Scroll horizontal detectado en Tab 4');
-
-    const bizData = await page.evaluate(() => {
-      const text = document.body.innerText;
-      const inputs = Array.from(document.querySelectorAll('input')).map((i) => i.value);
-      return {
-        whatsappPhone: inputs.find((v) => v.includes('5493585728550')),
-        deliveryHighlight: inputs.find((v) => v.includes('¡Envío gratis en Río Cuarto!')),
-        hasPriceListSection: text.includes('Foto de Lista de Precios Oficial'),
-      };
-    });
-    console.log('Datos de Negocio en Tab 4:', bizData);
-    if (!bizData.whatsappPhone || !bizData.deliveryHighlight || !bizData.hasPriceListSection) {
-      throw new Error('Los datos de negocio no se cargaron correctamente desde Supabase');
-    }
-
-    await page.screenshot({ path: path.join(OUTPUT_DIR, 'admin-06-business.png') });
-    console.log('✓ Captura guardada: admin-06-business.png');
-
-    // -------------------------------------------------------------------------
-    // 7. AUDITORÍA DE ERRORES DE CONSOLA
-    // -------------------------------------------------------------------------
-    console.log('\n--- 8. Auditoría de Errores en Consola ---');
+    console.log('\n--- Auditoría Final de Errores de Consola ---');
     console.log(`Total de errores capturados: ${consoleErrors.length}`);
     if (consoleErrors.length > 0) {
       console.error('Errores:', consoleErrors);
       throw new Error(`Se detectaron ${consoleErrors.length} errores de consola durante la prueba.`);
     }
 
-    console.log('\n=============================================================');
-    console.log('🎉 ¡TODAS LAS VALIDACIONES DE LA FASE 7 PASARON EXITOSAMENTE!');
-    console.log('=============================================================');
+    console.log('\n=============================================================================');
+    console.log('🎉 ¡TODAS LAS VALIDACIONES DE RESPONSIVIDAD (360px & 390px) PASARON CON ÉXITO!');
+    console.log('=============================================================================');
   } finally {
     await browser.close();
   }

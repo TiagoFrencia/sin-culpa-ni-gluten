@@ -74,6 +74,11 @@ function generateSlug(text: string): string {
   return clean || `producto-${Date.now()}`;
 }
 
+function formatPriceARS(price: number | null | undefined): string {
+  if (price === null || price === undefined) return 'Consultar';
+  return `$ ${price.toLocaleString('es-AR')}`;
+}
+
 export const ProductsTab: React.FC<ProductsTabProps> = ({
   products,
   onRefresh,
@@ -319,44 +324,29 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
         {products.map((prod) => (
           <div
             key={prod.id}
-            className="bg-white border border-[#E5DCCB] rounded-2xl p-4 shadow-xs flex flex-col gap-3"
+            className="bg-white border border-[#E5DCCB] rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col gap-2.5 min-w-0"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <img
-                  src={prod.image}
-                  alt={prod.name}
-                  className="w-14 h-14 rounded-xl object-cover border border-[#E5DCCB] shrink-0 bg-[#FAF7F2]"
-                  loading="lazy"
-                />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#A64B2A]">
-                      {CATEGORY_OPTIONS.find((c) => c.value === prod.category)?.label || prod.category}
-                    </span>
-                    {prod.badge && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
-                        {prod.badge}
-                      </span>
-                    )}
-                    {prod.featured && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#5A653E]/10 text-[#5A653E] font-semibold flex items-center gap-0.5">
-                        <Sparkles className="w-3 h-3" /> Destacado
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-sm font-bold text-[#1D120D] truncate mt-0.5">
-                    {prod.name}
-                  </h3>
-                  <p className="text-xs text-[#6B574B] line-clamp-1 mt-0.5">
-                    {prod.shortDescription}
-                  </p>
-                </div>
+            {/* Fila 1: Categoría y Badges a la izquierda, Estado a la derecha */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#A64B2A] bg-[#A64B2A]/10 px-2 py-0.5 rounded-md">
+                  {CATEGORY_OPTIONS.find((c) => c.value === prod.category)?.label || prod.category}
+                </span>
+                {prod.badge && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
+                    {prod.badge}
+                  </span>
+                )}
+                {prod.featured && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#5A653E]/10 text-[#5A653E] font-semibold flex items-center gap-0.5">
+                    <Sparkles className="w-3 h-3" /> Destacado
+                  </span>
+                )}
               </div>
 
               {/* Estado */}
               <span
-                className={`text-[10px] font-bold px-2 py-1 rounded-lg shrink-0 ${
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-lg shrink-0 ${
                   prod.available
                     ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                     : 'bg-rose-100 text-rose-900 border border-rose-300'
@@ -366,34 +356,52 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
               </span>
             </div>
 
-            {/* Variantes breves */}
-            <div className="flex items-center gap-2 flex-wrap text-xs text-[#6B574B] pt-2 border-t border-[#E5DCCB]/60">
-              <span className="font-semibold text-[#1D120D]">Precios:</span>
+            {/* Fila 2: Miniatura junto a Nombre Completo y Descripción */}
+            <div className="flex items-start gap-3 min-w-0">
+              <img
+                src={prod.image}
+                alt={prod.name}
+                className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl object-cover border border-[#E5DCCB] shrink-0 bg-[#FAF7F2]"
+                loading="lazy"
+              />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-bold text-[#1D120D] line-clamp-2 leading-snug break-words">
+                  {prod.name}
+                </h3>
+                <p className="text-xs text-[#6B574B] line-clamp-2 mt-0.5 break-words">
+                  {prod.shortDescription}
+                </p>
+              </div>
+            </div>
+
+            {/* Variantes y Precios de lectura formateados con formatPriceARS */}
+            <div className="flex items-center gap-1.5 flex-wrap text-xs text-[#6B574B] pt-2 border-t border-[#E5DCCB]/60">
+              <span className="font-semibold text-[#1D120D] text-[11px]">Precios:</span>
               {prod.variants?.map((v, i) => (
-                <span key={i} className="bg-[#FAF7F2] px-2 py-0.5 rounded-md border border-[#E5DCCB]/60">
-                  {v.label}: <strong className="text-[#1D120D]">{v.price !== null ? `$${v.price}` : 'Consultar'}</strong>
+                <span key={i} className="bg-[#FAF7F2] px-2 py-0.5 rounded-md border border-[#E5DCCB]/60 text-xs">
+                  {v.label}: <strong className="text-[#1D120D]">{formatPriceARS(v.price)}</strong>
                 </span>
               ))}
             </div>
 
-            {/* Botones de Acción */}
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E5DCCB]/60">
+            {/* Botones de Acción: Editar protagonista (flex-1) y Eliminar compacto (w-11) */}
+            <div className="flex items-center gap-2 pt-2 border-t border-[#E5DCCB]/60">
               <button
                 type="button"
                 onClick={() => handleOpenEdit(prod)}
-                className="min-h-[38px] px-3 py-1.5 rounded-xl border border-[#E5DCCB] hover:bg-[#FAF7F2] text-xs font-bold text-[#1D120D] flex items-center gap-1.5 transition-colors"
+                className="flex-1 min-h-[44px] px-3 py-2 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-xs font-bold text-[#1D120D] flex items-center justify-center gap-1.5 transition-colors shadow-2xs active:scale-98"
               >
                 <Edit2 className="w-3.5 h-3.5 text-[#A64B2A]" />
-                <span>Editar</span>
+                <span>Editar producto</span>
               </button>
               <button
                 type="button"
                 onClick={() => setProductToDelete(prod)}
-                className="min-h-[38px] px-3 py-1.5 rounded-xl border border-red-200 hover:bg-red-50 text-xs font-bold text-red-700 flex items-center gap-1.5 transition-colors"
-                aria-label={`Eliminar ${prod.name}`}
+                className="w-11 h-11 shrink-0 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors active:scale-95"
+                aria-label="Eliminar producto"
+                title={`Eliminar ${prod.name}`}
               >
-                <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                <span>Eliminar</span>
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -402,22 +410,22 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
 
       {/* Modal / Pantalla Completa Móvil de Edición / Creación */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-[#FAF7F2] w-full max-w-lg max-h-[92vh] rounded-t-3xl sm:rounded-2xl border border-[#E5DCCB] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-[#FAF7F2] w-full max-w-[calc(100vw-1rem)] sm:max-w-lg max-h-[92dvh] rounded-2xl border border-[#E5DCCB] shadow-2xl flex flex-col overflow-x-hidden mx-auto my-auto min-w-0 animate-in fade-in zoom-in-95">
             {/* Header del Modal */}
-            <div className="p-4 border-b border-[#E5DCCB] flex items-center justify-between bg-white">
-              <div>
-                <h3 className="text-base font-bold text-[#1D120D]">
+            <div className="p-3.5 sm:p-4 border-b border-[#E5DCCB] flex items-center justify-between bg-white min-w-0 gap-2 shrink-0">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-base font-bold text-[#1D120D] truncate">
                   {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
                 </h3>
-                <p className="text-xs text-[#6B574B]">
+                <p className="text-[11px] sm:text-xs text-[#6B574B] truncate">
                   {editingProduct ? `ID: ${editingProduct.id}` : 'Completá los campos sin riesgo de romper el diseño'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 rounded-xl text-[#6B574B] hover:text-[#1D120D] hover:bg-black/5"
+                className="p-1.5 sm:p-2 rounded-xl text-[#6B574B] hover:text-[#1D120D] hover:bg-black/5 shrink-0"
                 aria-label="Cerrar modal"
               >
                 <X className="w-5 h-5" />
@@ -425,9 +433,9 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
             </div>
 
             {/* Contenido scrolleable del formulario */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 space-y-4 text-xs min-w-0">
               {/* 1. FOTO: Selector + Preview 4:3 + Compresión WebP */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#3E271E]">
                   Foto del Producto (Aspecto 4:3)
                 </label>
@@ -481,13 +489,13 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
               </div>
 
               {/* 2. NOMBRE: Máx. 60 caracteres con contador */}
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
+              <div className="space-y-1 min-w-0">
+                <div className="flex justify-between items-center gap-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#3E271E]">
                     Nombre del Producto *
                   </label>
                   <span
-                    className={`text-[11px] font-semibold ${
+                    className={`text-[11px] font-semibold shrink-0 ${
                       formData.name.length >= 60 ? 'text-red-600 font-bold' : 'text-[#6B574B]'
                     }`}
                   >
@@ -506,7 +514,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
               </div>
 
               {/* 3. CATEGORÍA: <select> cerrado con 6 categorías estrictas */}
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <label className="text-xs font-bold uppercase tracking-wider text-[#3E271E]">
                   Categoría *
                 </label>
@@ -526,14 +534,14 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                 </select>
               </div>
 
-              {/* 4. DESCRIPCIÓN CORTA: Máx. 150 caracteres con contador */}
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
+              {/* 4. DESCRIPCIÓN CORTA: Máx. 150 caracteres con contador en textarea */}
+              <div className="space-y-1 min-w-0">
+                <div className="flex justify-between items-center gap-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#3E271E]">
                     Descripción Corta *
                   </label>
                   <span
-                    className={`text-[11px] font-semibold ${
+                    className={`text-[11px] font-semibold shrink-0 ${
                       formData.shortDescription.length >= 150 ? 'text-red-600 font-bold' : 'text-[#6B574B]'
                     }`}
                   >
@@ -554,41 +562,41 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
               </div>
 
               {/* 5. VARIANTES Y PRECIOS: Editor dinámico con checkbox consultar */}
-              <div className="space-y-2 pt-2 border-t border-[#E5DCCB]">
-                <div className="flex justify-between items-center">
+              <div className="space-y-2 pt-2 border-t border-[#E5DCCB] min-w-0">
+                <div className="flex justify-between items-center gap-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#3E271E]">
                     Variantes y Precios
                   </label>
                   <button
                     type="button"
                     onClick={handleAddVariant}
-                    className="text-xs font-bold text-[#A64B2A] hover:underline flex items-center gap-1 p-1"
+                    className="text-xs font-bold text-[#A64B2A] hover:underline flex items-center gap-1 p-1 shrink-0"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     + Agregar variante
                   </button>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   {formData.variants.map((variant, idx) => (
                     <div
                       key={variant.id || idx}
-                      className="bg-white p-3 rounded-xl border border-[#E5DCCB] space-y-2 shadow-2xs"
+                      className="bg-white p-2.5 sm:p-3 rounded-xl border border-[#E5DCCB] space-y-2 shadow-2xs min-w-0"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <input
                           type="text"
                           value={variant.label}
                           onChange={(e) => handleVariantChange(idx, 'label', e.target.value)}
                           placeholder="Etiqueta (ej. x 1 kg, Docena, Unidad)"
-                          className="flex-1 bg-[#FAF7F2] border border-[#E5DCCB] rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#1D120D]"
+                          className="flex-1 min-w-0 bg-[#FAF7F2] border border-[#E5DCCB] rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#1D120D]"
                           required
                         />
                         {formData.variants.length > 1 && (
                           <button
                             type="button"
                             onClick={() => handleRemoveVariant(idx)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg shrink-0"
                             title="Quitar variante"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -596,19 +604,19 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between gap-3 pt-1">
-                        <label className="flex items-center gap-1.5 cursor-pointer text-xs text-[#6B574B]">
+                      <div className="flex items-center justify-between gap-2 pt-1 min-w-0 flex-wrap sm:flex-nowrap">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-xs text-[#6B574B] min-w-0 flex-1">
                           <input
                             type="checkbox"
                             checked={variant.price === null}
                             onChange={(e) => handleVariantChange(idx, 'isConsult', e.target.checked)}
-                            className="w-4 h-4 rounded text-[#A64B2A] accent-[#A64B2A]"
+                            className="w-4 h-4 rounded text-[#A64B2A] accent-[#A64B2A] shrink-0"
                           />
-                          <span>Consultar precio por WhatsApp</span>
+                          <span className="truncate">Consultar por WhatsApp</span>
                         </label>
 
                         {variant.price !== null && (
-                          <div className="relative flex items-center w-28">
+                          <div className="relative flex items-center w-28 shrink-0">
                             <span className="absolute left-2.5 text-xs font-bold text-[#6B574B]">$</span>
                             <input
                               type="text"
@@ -628,16 +636,16 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
               </div>
 
               {/* 6. OPCIONES EXTRA */}
-              <div className="space-y-3 pt-2 border-t border-[#E5DCCB]">
+              <div className="space-y-3 pt-2 border-t border-[#E5DCCB] min-w-0">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#3E271E]">
                   Detalles y Opciones Extra
                 </h4>
 
                 {/* Toggle Pack 500g */}
-                <label className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#E5DCCB] cursor-pointer">
-                  <div>
-                    <span className="font-bold text-[#1D120D] text-xs">Acepta consulta pack 500g</span>
-                    <p className="text-[11px] text-[#6B574B]">Muestra en la web botón para consultar por 500 gramos</p>
+                <label className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#E5DCCB] cursor-pointer min-w-0 gap-2">
+                  <div className="min-w-0 flex-1">
+                    <span className="font-bold text-[#1D120D] text-xs block truncate">Acepta consulta pack 500g</span>
+                    <p className="text-[11px] text-[#6B574B] line-clamp-1">Muestra en la web botón para consultar por 500 gramos</p>
                   </div>
                   <input
                     type="checkbox"
@@ -645,12 +653,12 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, supportsHalfKgInquiry: e.target.checked }))
                     }
-                    className="w-5 h-5 rounded text-[#A64B2A] accent-[#A64B2A]"
+                    className="w-5 h-5 rounded text-[#A64B2A] accent-[#A64B2A] shrink-0"
                   />
                 </label>
 
                 {/* Sabores opcionales */}
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <label className="text-xs font-semibold text-[#3E271E]">
                     Sabores disponibles (separados por coma)
                   </label>
@@ -665,11 +673,11 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                   />
                 </div>
 
-                {/* Tip de cocción */}
-                <div className="space-y-1">
+                {/* Tip de cocción en textarea para leer completo */}
+                <div className="space-y-1 min-w-0">
                   <label className="text-xs font-semibold text-[#3E271E]">Tip de cocción</label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={formData.cookingTip}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, cookingTip: e.target.value }))
@@ -680,7 +688,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                 </div>
 
                 {/* Duración en freezer */}
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <label className="text-xs font-semibold text-[#3E271E]">Duración en freezer</label>
                   <input
                     type="text"
@@ -694,10 +702,10 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                 </div>
 
                 {/* Badge opcional (máx 20 chars) */}
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex justify-between items-center gap-2">
                     <label className="text-xs font-semibold text-[#3E271E]">Badge opcional</label>
-                    <span className="text-[10px] text-[#6B574B]">{formData.badge.length}/20</span>
+                    <span className="text-[10px] text-[#6B574B] shrink-0">{formData.badge.length}/20</span>
                   </div>
                   <input
                     type="text"
@@ -710,39 +718,39 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                 </div>
 
                 {/* Toggles Destacado y Disponible */}
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="flex items-center gap-2 p-3 rounded-xl bg-white border border-[#E5DCCB] cursor-pointer">
+                <div className="grid grid-cols-2 gap-2 min-w-0">
+                  <label className="flex items-center gap-2 p-2.5 sm:p-3 rounded-xl bg-white border border-[#E5DCCB] cursor-pointer min-w-0">
                     <input
                       type="checkbox"
                       checked={formData.featured}
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, featured: e.target.checked }))
                       }
-                      className="w-4 h-4 rounded text-[#A64B2A] accent-[#A64B2A]"
+                      className="w-4 h-4 rounded text-[#A64B2A] accent-[#A64B2A] shrink-0"
                     />
-                    <span className="font-bold text-[#1D120D] text-xs">Destacado</span>
+                    <span className="font-bold text-[#1D120D] text-xs truncate">Destacado</span>
                   </label>
 
-                  <label className="flex items-center gap-2 p-3 rounded-xl bg-white border border-[#E5DCCB] cursor-pointer">
+                  <label className="flex items-center gap-2 p-2.5 sm:p-3 rounded-xl bg-white border border-[#E5DCCB] cursor-pointer min-w-0">
                     <input
                       type="checkbox"
                       checked={formData.available}
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, available: e.target.checked }))
                       }
-                      className="w-4 h-4 rounded text-[#A64B2A] accent-[#A64B2A]"
+                      className="w-4 h-4 rounded text-[#A64B2A] accent-[#A64B2A] shrink-0"
                     />
-                    <span className="font-bold text-[#1D120D] text-xs">Disponible</span>
+                    <span className="font-bold text-[#1D120D] text-xs truncate">Disponible</span>
                   </label>
                 </div>
               </div>
 
               {/* Botón Guardar en modal */}
-              <div className="pt-4 border-t border-[#E5DCCB] sticky bottom-0 bg-[#FAF7F2] pb-2">
+              <div className="pt-3 border-t border-[#E5DCCB] sticky bottom-0 bg-[#FAF7F2] pb-1 shrink-0">
                 <button
                   type="submit"
                   disabled={isSubmitting || isUploadingImage}
-                  className="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm text-white bg-[#A64B2A] hover:bg-[#8C3D21] active:bg-[#78341B] shadow-sm disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="w-full min-h-[48px] py-3 px-4 rounded-xl font-bold text-sm text-white bg-[#A64B2A] hover:bg-[#8C3D21] active:bg-[#78341B] shadow-sm disabled:opacity-60 flex items-center justify-center gap-2 active:scale-98"
                 >
                   <Check className="w-4 h-4" />
                   <span>

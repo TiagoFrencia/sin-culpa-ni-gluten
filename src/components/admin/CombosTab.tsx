@@ -57,6 +57,11 @@ function generateSlug(text: string): string {
   return clean || `combo-${Date.now()}`;
 }
 
+function formatPriceARS(price: number | null | undefined): string {
+  if (price === null || price === undefined) return 'Consultar';
+  return `$ ${price.toLocaleString('es-AR')}`;
+}
+
 export const CombosTab: React.FC<CombosTabProps> = ({
   combos,
   onRefresh,
@@ -270,38 +275,23 @@ export const CombosTab: React.FC<CombosTabProps> = ({
         {combos.map((combo) => (
           <div
             key={combo.id}
-            className="bg-white border border-[#E5DCCB] rounded-2xl p-4 shadow-xs flex flex-col gap-3"
+            className="bg-white border border-[#E5DCCB] rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col gap-2.5 min-w-0"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <img
-                  src={combo.image}
-                  alt={combo.name}
-                  className="w-14 h-14 rounded-xl object-cover border border-[#E5DCCB] shrink-0 bg-[#FAF7F2]"
-                  loading="lazy"
-                />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A653E]">
-                      Combo Especial
-                    </span>
-                    {combo.badge && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
-                        {combo.badge}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="text-sm font-bold text-[#1D120D] truncate mt-0.5">
-                    {combo.name}
-                  </h3>
-                  <p className="text-xs text-[#6B574B] line-clamp-1 mt-0.5">
-                    {combo.subtitle}
-                  </p>
-                </div>
+            {/* Fila 1: Categoría y Badge a la izquierda, Estado a la derecha */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A653E] bg-[#5A653E]/10 px-2 py-0.5 rounded-md">
+                  Combo Especial
+                </span>
+                {combo.badge && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
+                    {combo.badge}
+                  </span>
+                )}
               </div>
 
               <span
-                className={`text-[10px] font-bold px-2 py-1 rounded-lg shrink-0 ${
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-lg shrink-0 ${
                   combo.available
                     ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                     : 'bg-rose-100 text-rose-900 border border-rose-300'
@@ -311,9 +301,27 @@ export const CombosTab: React.FC<CombosTabProps> = ({
               </span>
             </div>
 
+            {/* Fila 2: Miniatura junto a Nombre Completo y Subtítulo */}
+            <div className="flex items-start gap-3 min-w-0">
+              <img
+                src={combo.image}
+                alt={combo.name}
+                className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl object-cover border border-[#E5DCCB] shrink-0 bg-[#FAF7F2]"
+                loading="lazy"
+              />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-bold text-[#1D120D] line-clamp-2 leading-snug break-words">
+                  {combo.name}
+                </h3>
+                <p className="text-xs text-[#6B574B] line-clamp-2 mt-0.5 break-words">
+                  {combo.subtitle}
+                </p>
+              </div>
+            </div>
+
             {/* Ítems incluidos preview */}
             <div className="text-xs text-[#6B574B] pt-2 border-t border-[#E5DCCB]/60 space-y-1">
-              <span className="font-semibold text-[#1D120D]">Incluye:</span>
+              <span className="font-semibold text-[#1D120D] text-[11px]">Incluye:</span>
               <ul className="list-disc list-inside space-y-0.5 pl-1">
                 {combo.itemsIncluded?.map((item, idx) => (
                   <li key={idx} className="truncate">
@@ -323,42 +331,42 @@ export const CombosTab: React.FC<CombosTabProps> = ({
               </ul>
             </div>
 
-            {/* Precios */}
+            {/* Precios formateados con formatPriceARS */}
             <div className="flex items-center gap-3 pt-2 border-t border-[#E5DCCB]/60 text-xs">
               <div>
                 <span className="text-[11px] text-[#6B574B]">Precio regular: </span>
                 <strong className={combo.promoPrice ? 'line-through text-stone-400' : 'text-[#1D120D]'}>
-                  ${combo.regularPrice.toLocaleString('es-AR')}
+                  {formatPriceARS(combo.regularPrice)}
                 </strong>
               </div>
               {combo.promoPrice && (
                 <div>
                   <span className="text-[11px] text-[#A64B2A] font-bold">Promo: </span>
                   <strong className="text-emerald-700 font-bold text-sm">
-                    ${combo.promoPrice.toLocaleString('es-AR')}
+                    {formatPriceARS(combo.promoPrice)}
                   </strong>
                 </div>
               )}
             </div>
 
-            {/* Botones de Acción */}
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E5DCCB]/60">
+            {/* Botones de Acción: Editar protagonista (flex-1) y Eliminar compacto (w-11) */}
+            <div className="flex items-center gap-2 pt-2 border-t border-[#E5DCCB]/60">
               <button
                 type="button"
                 onClick={() => handleOpenEdit(combo)}
-                className="min-h-[38px] px-3 py-1.5 rounded-xl border border-[#E5DCCB] hover:bg-[#FAF7F2] text-xs font-bold text-[#1D120D] flex items-center gap-1.5 transition-colors"
+                className="flex-1 min-h-[44px] px-3 py-2 rounded-xl border border-[#E5DCCB] bg-white hover:bg-[#FAF7F2] text-xs font-bold text-[#1D120D] flex items-center justify-center gap-1.5 transition-colors shadow-2xs active:scale-98"
               >
                 <Edit2 className="w-3.5 h-3.5 text-[#A64B2A]" />
-                <span>Editar</span>
+                <span>Editar combo</span>
               </button>
               <button
                 type="button"
                 onClick={() => setComboToDelete(combo)}
-                className="min-h-[38px] px-3 py-1.5 rounded-xl border border-red-200 hover:bg-red-50 text-xs font-bold text-red-700 flex items-center gap-1.5 transition-colors"
-                aria-label={`Eliminar combo ${combo.name}`}
+                className="w-11 h-11 shrink-0 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 flex items-center justify-center transition-colors active:scale-95"
+                aria-label="Eliminar combo"
+                title={`Eliminar combo ${combo.name}`}
               >
-                <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                <span>Eliminar</span>
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -367,27 +375,28 @@ export const CombosTab: React.FC<CombosTabProps> = ({
 
       {/* Modal / Formulario Crear / Editar Combo */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-[#FAF7F2] w-full max-w-lg max-h-[92vh] rounded-t-3xl sm:rounded-2xl border border-[#E5DCCB] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
-            <div className="p-4 border-b border-[#E5DCCB] flex items-center justify-between bg-white">
-              <div>
-                <h3 className="text-base font-bold text-[#1D120D]">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-[#FAF7F2] w-full max-w-[calc(100vw-1rem)] sm:max-w-lg max-h-[92dvh] rounded-2xl border border-[#E5DCCB] shadow-2xl flex flex-col overflow-x-hidden mx-auto my-auto min-w-0 animate-in fade-in zoom-in-95">
+            <div className="p-3.5 sm:p-4 border-b border-[#E5DCCB] flex items-center justify-between bg-white min-w-0 gap-2 shrink-0">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-base font-bold text-[#1D120D] truncate">
                   {editingCombo ? 'Editar Combo' : 'Nuevo Combo'}
                 </h3>
-                <p className="text-xs text-[#6B574B]">
+                <p className="text-[11px] sm:text-xs text-[#6B574B] truncate">
                   Configurá foto, ítems y precios promocionales
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 rounded-xl text-[#6B574B] hover:text-[#1D120D] hover:bg-black/5"
+                className="p-1.5 sm:p-2 rounded-xl text-[#6B574B] hover:text-[#1D120D] hover:bg-black/5 shrink-0"
+                aria-label="Cerrar modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 space-y-4 text-xs min-w-0">
               {/* Foto 4:3 */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#3E271E]">
@@ -455,13 +464,13 @@ export const CombosTab: React.FC<CombosTabProps> = ({
                 <label className="text-xs font-bold uppercase tracking-wider text-[#3E271E]">
                   Subtítulo Descriptivo *
                 </label>
-                <input
-                  type="text"
+                <textarea
+                  rows={2}
                   value={formData.subtitle}
                   onChange={(e) => setFormData((prev) => ({ ...prev, subtitle: e.target.value }))}
                   placeholder="Ej. Abastecé tu freezer con los favoritos de la casa"
                   required
-                  className="w-full bg-white border border-[#E5DCCB] rounded-xl px-3.5 py-2 text-xs text-[#1D120D]"
+                  className="w-full bg-white border border-[#E5DCCB] rounded-xl px-3.5 py-2 text-xs text-[#1D120D] resize-none"
                 />
               </div>
 
@@ -475,13 +484,13 @@ export const CombosTab: React.FC<CombosTabProps> = ({
                   {formData.itemsIncluded.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between gap-2 bg-white px-3 py-2 rounded-xl border border-[#E5DCCB]"
+                      className="flex items-center justify-between gap-2 bg-white px-3 py-2 rounded-xl border border-[#E5DCCB] min-w-0"
                     >
-                      <span className="text-xs text-[#1D120D]">{item}</span>
+                      <span className="text-xs text-[#1D120D] break-words min-w-0 flex-1">{item}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(idx)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded-lg"
+                        className="p-1 text-red-600 hover:bg-red-50 rounded-lg shrink-0"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -490,7 +499,7 @@ export const CombosTab: React.FC<CombosTabProps> = ({
                 </div>
 
                 {/* Input para agregar ítem */}
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-2 pt-1 min-w-0">
                   <input
                     type="text"
                     value={newItemText}
@@ -502,7 +511,7 @@ export const CombosTab: React.FC<CombosTabProps> = ({
                       }
                     }}
                     placeholder="Ej. 1 kg Milanesas de Pollo"
-                    className="flex-1 bg-white border border-[#E5DCCB] rounded-xl px-3 py-2 text-xs text-[#1D120D]"
+                    className="flex-1 min-w-0 bg-white border border-[#E5DCCB] rounded-xl px-3 py-2 text-xs text-[#1D120D]"
                   />
                   <button
                     type="button"
@@ -515,9 +524,9 @@ export const CombosTab: React.FC<CombosTabProps> = ({
               </div>
 
               {/* Precios: Regular y Promo opcional */}
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#E5DCCB]">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#3E271E]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-[#E5DCCB] items-end min-w-0">
+                <div className="space-y-1 min-w-0">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#3E271E] block truncate">
                     Precio Regular ($) *
                   </label>
                   <input
@@ -533,8 +542,8 @@ export const CombosTab: React.FC<CombosTabProps> = ({
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#A64B2A]">
+                <div className="space-y-1 min-w-0">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#A64B2A] block truncate">
                     Precio Promo ($ Opcional)
                   </label>
                   <input

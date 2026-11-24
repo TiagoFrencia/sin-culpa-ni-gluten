@@ -31,6 +31,89 @@ function InstagramIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
+/**
+ * Procesa y sanitiza el número de WhatsApp ingresado por el usuario.
+ * Si tiene 10 dígitos (estándar argentino local), agrega prefijo 549 y formatea la visualización.
+ */
+function processWhatsAppInput(raw: string): { phone: string; display: string } {
+  let digits = raw.replace(/\D/g, '');
+  if (!digits) return { phone: '', display: '' };
+
+  // Si ya tiene 13 dígitos y empieza con 549
+  if (digits.startsWith('549') && digits.length === 13) {
+    const local = digits.slice(3);
+    return {
+      phone: digits,
+      display: formatLocalPhone(local),
+    };
+  }
+
+  // Quitar 54 y 9 si vino incompleto
+  if (digits.startsWith('54')) {
+    digits = digits.slice(2);
+    if (digits.startsWith('9')) {
+      digits = digits.slice(1);
+    }
+  }
+
+  // Quitar 0 inicial si lo tipearón
+  if (digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+
+  // Quitar el 15 de celular si está después de la característica (ej. 358 15 5728550 -> 12 dígitos)
+  if (digits.length === 12 && digits.slice(3, 5) === '15') {
+    digits = digits.slice(0, 3) + digits.slice(5);
+  } else if (digits.length === 11 && digits.startsWith('11') && digits.slice(2, 4) === '15') {
+    digits = digits.slice(0, 2) + digits.slice(4);
+  }
+
+  // Si quedaron 10 dígitos locales
+  if (digits.length === 10) {
+    return {
+      phone: `549${digits}`,
+      display: formatLocalPhone(digits),
+    };
+  }
+
+  // Fallback si ingresó otro formato internacional
+  return {
+    phone: digits,
+    display: raw.trim(),
+  };
+}
+
+function formatLocalPhone(local10: string): string {
+  if (local10.length !== 10) return local10;
+  if (local10.startsWith('11')) {
+    return `11 ${local10.slice(2, 6)}-${local10.slice(6)}`;
+  }
+  // Características comunes de 3 dígitos (358, 351, 341, etc.)
+  return `${local10.slice(0, 3)} ${local10.slice(3, 6)}-${local10.slice(6)}`;
+}
+
+/**
+ * Procesa el usuario de Instagram y genera la URL completa automáticamente.
+ */
+function processInstagramInput(raw: string): { handle: string; url: string } {
+  let cleaned = raw.trim();
+  if (!cleaned) return { handle: '', url: '' };
+
+  if (cleaned.includes('instagram.com/')) {
+    const parts = cleaned.split('instagram.com/');
+    const userPart = parts[1]?.split(/[/?#]/)[0] || '';
+    cleaned = userPart;
+  }
+
+  const username = cleaned.replace(/^@+/, '').trim();
+  if (!username) return { handle: '', url: '' };
+
+  return {
+    handle: `@${username}`,
+    url: `https://www.instagram.com/${username}/`,
+  };
+}
+
 interface BusinessSettingsTabProps {
   business: BusinessConfig;
   onRefresh: () => Promise<void>;
@@ -46,17 +129,24 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
     brandName: business.brandName,
     slogan: business.slogan,
     deliveryHighlight: business.deliveryHighlight,
-    whatsappPhone: business.whatsappPhone,
-    whatsappDisplay: business.whatsappDisplay,
-    instagramHandle: business.instagramHandle,
-    instagramUrl: business.instagramUrl,
     priceListImageUrl: business.priceListImageUrl,
   });
+
+  const [whatsappRaw, setWhatsappRaw] = useState(
+    business.whatsappDisplay || business.whatsappPhone || '358 572-8550'
+  );
+  const [instagramRaw, setInstagramRaw] = useState(
+    business.instagramHandle || '@sinculpa.nigluten'
+  );
 
   const [isUploadingPriceList, setIsUploadingPriceList] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Manejo de subida de lista de precios (manteniendo proporción original)
+  // Previsualizaciones reactivas en vivo
+  const liveWhatsApp = processWhatsAppInput(whatsappRaw);
+  const liveInstagram = processInstagramInput(instagramRaw);
+
+  // Manejo de subida de lista de precios (manteniendo proporción original intacta)
   const handlePriceListUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -80,12 +170,13 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
     e.preventDefault();
     if (!supabase) return;
 
-    // Sanitizar número de WhatsApp: solo números
-    const cleanPhone = formData.whatsappPhone.replace(/\D/g, '');
-    if (cleanPhone.length < 8) {
-      showToast('El número de WhatsApp no parece ser válido.', 'error');
+    const processedPhone = processWhatsAppInput(whatsappRaw);
+    if (!processedPhone.phone || processedPhone.phone.length < 8) {
+      showToast('Por favor ingresá un número de WhatsApp válido con código de área (ej. 358 572-8550).', 'error');
       return;
     }
+
+    const processedIg = processInstagramInput(instagramRaw);
 
     try {
       setIsSubmitting(true);
@@ -94,10 +185,10 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
         brand_name: formData.brandName.trim(),
         slogan: formData.slogan.trim(),
         delivery_highlight: formData.deliveryHighlight.trim(),
-        whatsapp_phone: cleanPhone,
-        whatsapp_display: formData.whatsappDisplay.trim(),
-        instagram_handle: formData.instagramHandle.trim(),
-        instagram_url: formData.instagramUrl.trim(),
+        whatsapp_phone: processedPhone.phone,
+        whatsapp_display: processedPhone.display,
+        instagram_handle: processedIg.handle,
+        instagram_url: processedIg.url,
         price_list_image_url: formData.priceListImageUrl.trim(),
       };
 
@@ -118,62 +209,50 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
   };
 
   return (
-    <div className="space-y-4 pb-16">
+    <div className="space-y-4 pb-16 w-full max-w-full overflow-x-hidden">
       {/* Banner Informativo */}
       <div className="bg-[#FAF7F2] border border-[#E5DCCB] rounded-2xl p-4 shadow-sm flex items-start gap-3">
         <div className="p-2 rounded-xl bg-[#A64B2A]/10 text-[#A64B2A] shrink-0 mt-0.5">
           <Building2 className="w-5 h-5" />
         </div>
-        <div>
+        <div className="min-w-0">
           <h2 className="text-sm font-bold text-[#1D120D]">Datos del Negocio y Canales</h2>
-          <p className="text-xs text-[#6B574B] mt-0.5">
+          <p className="text-xs text-[#6B574B] mt-0.5 leading-relaxed">
             Configurá el número de WhatsApp receptor, el anuncio superior de la tienda y la foto de la lista de precios oficial.
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Sección 1: WhatsApp */}
+        {/* Sección 1: WhatsApp Simplificado */}
         <div className="bg-white border border-[#E5DCCB] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-[#1D120D] border-b border-[#E5DCCB]/60 pb-2">
             <Phone className="w-4 h-4 text-emerald-600" />
             <span>Canal de WhatsApp (Recepción de Pedidos)</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#3E271E]">
-                Número Real (Sanitizado sin símbolos ni espacios) *
-              </label>
-              <input
-                type="text"
-                value={formData.whatsappPhone}
-                onChange={(e) => setFormData((prev) => ({ ...prev, whatsappPhone: e.target.value }))}
-                placeholder="5493585728550"
-                required
-                className="w-full bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl px-3.5 py-2 text-sm font-bold text-[#1D120D]"
-              />
-              <p className="text-[11px] text-[#6B574B]">
-                Ejemplo Argentina con código país: <strong>5493585728550</strong>
-              </p>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#3E271E] block">
+              Número de WhatsApp (con código de área, sin 0 ni 15) *
+            </label>
+            <input
+              type="text"
+              inputMode="tel"
+              value={whatsappRaw}
+              onChange={(e) => setWhatsappRaw(e.target.value)}
+              placeholder="Ej. 358 572-8550"
+              required
+              className="w-full bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl px-3.5 py-2.5 text-sm font-bold text-[#1D120D]"
+            />
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#5A653E] pt-0.5">
+              <span className="font-medium">Link de pedidos activo:</span>
+              <span className="font-mono font-bold text-[#1D120D] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                wa.me/{liveWhatsApp.phone || '...'}
+              </span>
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#3E271E]">
-                Formato Visual para el Cliente *
-              </label>
-              <input
-                type="text"
-                value={formData.whatsappDisplay}
-                onChange={(e) => setFormData((prev) => ({ ...prev, whatsappDisplay: e.target.value }))}
-                placeholder="358 572-8550"
-                required
-                className="w-full bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl px-3.5 py-2 text-sm font-medium text-[#1D120D]"
-              />
-              <p className="text-[11px] text-[#6B574B]">
-                Así se muestra en el footer y barra de contacto.
-              </p>
-            </div>
+            <p className="text-[11px] text-[#6B574B]">
+              Se formatea automáticamente para la web como <strong>{liveWhatsApp.display || '...'}</strong> con prefijo internacional 549.
+            </p>
           </div>
         </div>
 
@@ -186,7 +265,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
 
           <div className="space-y-3 text-xs">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#3E271E]">
+              <label className="text-xs font-semibold text-[#3E271E] block">
                 Texto de la Barra Superior de Anuncio *
               </label>
               <input
@@ -201,7 +280,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#3E271E]">
+              <label className="text-xs font-semibold text-[#3E271E] block">
                 Slogan de la Marca
               </label>
               <input
@@ -215,34 +294,35 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
           </div>
         </div>
 
-        {/* Sección 3: Redes Sociales (Instagram) */}
+        {/* Sección 3: Redes Sociales (Instagram Simplificado) */}
         <div className="bg-white border border-[#E5DCCB] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-[#1D120D] border-b border-[#E5DCCB]/60 pb-2">
             <InstagramIcon className="w-4 h-4 text-pink-600" />
             <span>Instagram Oficial</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#3E271E]">Usuario (Handle)</label>
-              <input
-                type="text"
-                value={formData.instagramHandle}
-                onChange={(e) => setFormData((prev) => ({ ...prev, instagramHandle: e.target.value }))}
-                placeholder="@sinculpa.nigluten"
-                className="w-full bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl px-3.5 py-2 text-xs text-[#1D120D]"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#3E271E]">Enlace URL Directo</label>
-              <input
-                type="url"
-                value={formData.instagramUrl}
-                onChange={(e) => setFormData((prev) => ({ ...prev, instagramUrl: e.target.value }))}
-                placeholder="https://www.instagram.com/sinculpa.nigluten/"
-                className="w-full bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl px-3.5 py-2 text-xs text-[#1D120D]"
-              />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#3E271E] block">
+              Usuario de Instagram *
+            </label>
+            <input
+              type="text"
+              value={instagramRaw}
+              onChange={(e) => setInstagramRaw(e.target.value)}
+              placeholder="Ej. @sinculpa.nigluten"
+              className="w-full bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl px-3.5 py-2 text-sm font-semibold text-[#1D120D]"
+            />
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#6B574B] pt-0.5">
+              <span>Perfil enlazado:</span>
+              <a
+                href={liveInstagram.url || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-xs text-[#A64B2A] hover:underline flex items-center gap-1"
+              >
+                <span>{liveInstagram.url || '...'}</span>
+                {liveInstagram.url && <ExternalLink className="w-3 h-3 inline" />}
+              </a>
             </div>
           </div>
         </div>
@@ -267,7 +347,7 @@ export const BusinessSettingsTab: React.FC<BusinessSettingsTabProps> = ({
             )}
           </div>
 
-          <p className="text-xs text-[#6B574B]">
+          <p className="text-xs text-[#6B574B] leading-relaxed">
             Esta imagen se abre cuando los clientes tocan "Ver Lista de Precios". La compresión automática preserva la proporción completa del volante para que los textos no se corten.
           </p>
 

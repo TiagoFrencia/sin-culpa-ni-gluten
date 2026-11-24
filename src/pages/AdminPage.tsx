@@ -116,123 +116,122 @@ export const AdminPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-paper-texture text-[#1D120D] flex flex-col selection:bg-[#A64B2A] selection:text-white">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-paper-texture text-[#1D120D] flex flex-col selection:bg-[#A64B2A] selection:text-white">
       {/* Cabecera Fija Móvil-First */}
-      <header className="sticky top-0 z-30 bg-[#1D120D] text-[#FAF7F2] border-b border-black/20 shadow-md">
-        <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-center justify-between">
-          {/* Logo y Badge */}
-          <div className="flex items-center gap-2">
-            <div>
-              <h1 className="font-serif text-sm sm:text-base font-bold tracking-tight text-[#FAF7F2] leading-none">
-                Sin Culpa Ni Gluten
-              </h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#A64B2A] bg-black/40 px-1.5 py-0.2 rounded">
-                  Admin
-                </span>
-                <span className="text-[10px] text-stone-400 truncate max-w-[120px] sm:max-w-[200px]">
-                  {userEmail}
-                </span>
-              </div>
-            </div>
+      <header className="sticky top-0 z-30 w-full max-w-full bg-[#1D120D] text-[#FAF7F2] border-b border-black/20 shadow-md">
+        <div className="max-w-2xl mx-auto px-2.5 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 min-w-0">
+          {/* Logo y Badge compactos en una sola fila */}
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <h1 className="font-serif text-sm sm:text-base font-bold tracking-tight text-[#FAF7F2] leading-none truncate">
+              Sin Culpa Ni Gluten
+            </h1>
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#A64B2A] bg-black/40 px-1.5 py-0.5 rounded shrink-0">
+              Admin
+            </span>
+            {/* Email oculto en móvil < sm para no apretar el header */}
+            <span className="hidden sm:inline-block text-[10px] text-stone-400 truncate max-w-[140px]">
+              {userEmail}
+            </span>
           </div>
 
-          {/* Acciones de Cabecera: Ver tienda y Cerrar Sesión */}
-          <div className="flex items-center gap-2">
+          {/* Acciones de Cabecera: Refrescar, Ver tienda y Cerrar Sesión */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={() => refreshCatalog()}
-              className="p-2 rounded-xl text-stone-300 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 sm:p-2 rounded-lg text-stone-300 hover:text-white hover:bg-white/10 transition-colors"
               title="Refrescar catálogo"
               aria-label="Refrescar catálogo"
             >
-              <RefreshCw className={`w-4 h-4 ${isCatalogLoading ? 'animate-spin text-[#A64B2A]' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isCatalogLoading ? 'animate-spin text-[#A64B2A]' : ''}`} />
             </button>
 
             <a
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="min-h-[38px] px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-[#FAF7F2] text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/10 active:scale-95"
+              className="h-8 sm:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 text-[#FAF7F2] text-xs font-semibold flex items-center gap-1 transition-colors border border-white/10 active:scale-95 shrink-0"
+              title="Ver tienda"
             >
               <ExternalLink className="w-3.5 h-3.5 text-terracotta-400" />
-              <span className="hidden sm:inline">Ver tienda</span>
-              <span className="sm:hidden">Tienda</span>
+              <span className="hidden min-[380px]:inline">Tienda</span>
             </a>
 
             <button
               type="button"
               onClick={handleSignOut}
-              className="min-h-[38px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-red-950/60 hover:bg-red-900/80 text-red-200 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-red-800/40 active:scale-95"
+              className="h-8 sm:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-red-950/70 hover:bg-red-900/80 text-red-200 text-xs font-semibold flex items-center gap-1 transition-colors border border-red-800/40 active:scale-95 shrink-0"
               title="Cerrar sesión"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Salir</span>
+              <span className="hidden min-[380px]:inline">Salir</span>
             </button>
           </div>
         </div>
 
-        {/* 4 Pestañas Superiores pensadas para el dedo */}
-        <nav
-          className="max-w-2xl mx-auto px-2 border-t border-white/10 flex items-center justify-between"
-          aria-label="Navegación del panel de administración"
-        >
-          <button
-            type="button"
-            onClick={() => setActiveTab('express')}
-            className={`flex-1 min-h-[44px] py-2.5 px-1 text-center font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
-              activeTab === 'express'
-                ? 'border-[#A64B2A] text-white bg-white/5'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
-            }`}
+        {/* 4 Pestañas Superiores contenidas con overflow-x-auto estricto */}
+        <div className="w-full border-t border-white/10 overflow-x-auto scrollbar-none">
+          <nav
+            className="max-w-2xl mx-auto px-1 sm:px-2 flex items-center justify-between min-w-[340px]"
+            aria-label="Navegación del panel de administración"
           >
-            <Zap className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'express' ? 'text-[#A64B2A]' : ''}`} />
-            <span className="truncate">Precios y Stock</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('express')}
+              className={`flex-1 min-h-[44px] py-2 px-1 text-center font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'express'
+                  ? 'border-[#A64B2A] text-white bg-white/5'
+                  : 'border-transparent text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <Zap className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'express' ? 'text-[#A64B2A]' : ''}`} />
+              <span className="truncate">Precios y Stock</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('products')}
-            className={`flex-1 min-h-[44px] py-2.5 px-1 text-center font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
-              activeTab === 'products'
-                ? 'border-[#A64B2A] text-white bg-white/5'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
-            }`}
-          >
-            <UtensilsCrossed className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'products' ? 'text-[#A64B2A]' : ''}`} />
-            <span className="truncate">Productos</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('products')}
+              className={`flex-1 min-h-[44px] py-2 px-1 text-center font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'products'
+                  ? 'border-[#A64B2A] text-white bg-white/5'
+                  : 'border-transparent text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <UtensilsCrossed className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'products' ? 'text-[#A64B2A]' : ''}`} />
+              <span className="truncate">Productos</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('combos')}
-            className={`flex-1 min-h-[44px] py-2.5 px-1 text-center font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
-              activeTab === 'combos'
-                ? 'border-[#A64B2A] text-white bg-white/5'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
-            }`}
-          >
-            <Layers className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'combos' ? 'text-[#A64B2A]' : ''}`} />
-            <span className="truncate">Combos</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('combos')}
+              className={`flex-1 min-h-[44px] py-2 px-1 text-center font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'combos'
+                  ? 'border-[#A64B2A] text-white bg-white/5'
+                  : 'border-transparent text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <Layers className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'combos' ? 'text-[#A64B2A]' : ''}`} />
+              <span className="truncate">Combos</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('business')}
-            className={`flex-1 min-h-[44px] py-2.5 px-1 text-center font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
-              activeTab === 'business'
-                ? 'border-[#A64B2A] text-white bg-white/5'
-                : 'border-transparent text-stone-400 hover:text-stone-200'
-            }`}
-          >
-            <Store className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'business' ? 'text-[#A64B2A]' : ''}`} />
-            <span className="truncate">Negocio</span>
-          </button>
-        </nav>
+            <button
+              type="button"
+              onClick={() => setActiveTab('business')}
+              className={`flex-1 min-h-[44px] py-2 px-1 text-center font-bold text-xs flex items-center justify-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'business'
+                  ? 'border-[#A64B2A] text-white bg-white/5'
+                  : 'border-transparent text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <Store className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'business' ? 'text-[#A64B2A]' : ''}`} />
+              <span className="truncate">Negocio</span>
+            </button>
+          </nav>
+        </div>
       </header>
 
       {/* Contenido Principal con límite de ancho responsivo y sin scroll horizontal */}
-      <main className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-4 py-4 overflow-x-hidden">
+      <main className="flex-1 w-full max-w-2xl mx-auto px-2.5 sm:px-4 py-3 sm:py-4 overflow-x-hidden min-w-0">
         {activeTab === 'express' && (
           <PriceStockTab
             products={products}

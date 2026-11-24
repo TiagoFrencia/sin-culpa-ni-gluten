@@ -323,23 +323,17 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                   : 'border-red-200 bg-red-50/20 opacity-80'
               }`}
             >
-              {/* Encabezado del Producto */}
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-12 h-12 rounded-xl object-cover border border-[#E5DCCB] shrink-0 bg-[#FAF7F2]"
-                    loading="lazy"
-                  />
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#A64B2A]">
-                      {CATEGORY_LABELS[product.category] || product.category}
+              {/* Encabezado del Producto: Fila 1 Categoría y Stock, Fila 2 Foto y Nombre completo */}
+              <div className="flex items-center justify-between gap-2 mb-2.5">
+                <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#A64B2A] bg-[#A64B2A]/10 px-2 py-0.5 rounded-md">
+                    {CATEGORY_LABELS[product.category] || product.category}
+                  </span>
+                  {product.badge && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
+                      {product.badge}
                     </span>
-                    <h3 className="text-sm font-bold text-[#1D120D] truncate leading-tight">
-                      {product.name}
-                    </h3>
-                  </div>
+                  )}
                 </div>
 
                 {/* Toggle Táctil Grande de Stock */}
@@ -347,7 +341,7 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                   type="button"
                   onClick={() => handleToggleProductStock(product)}
                   disabled={isStockUpdating}
-                  className={`min-h-[44px] px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
+                  className={`min-h-[38px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
                     product.available
                       ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
                       : 'bg-rose-100 text-rose-900 border border-rose-300 hover:bg-rose-200'
@@ -361,6 +355,21 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                   />
                   <span>{product.available ? 'Disponible' : 'Sin stock'}</span>
                 </button>
+              </div>
+
+              {/* Fila 2: Miniatura junto a Nombre Completo (sin truncar apretado) */}
+              <div className="flex items-center gap-3 mb-3">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-13 h-13 rounded-xl object-cover border border-[#E5DCCB] shrink-0 bg-[#FAF7F2]"
+                  loading="lazy"
+                />
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-bold text-[#1D120D] line-clamp-2 leading-snug break-words">
+                    {product.name}
+                  </h3>
+                </div>
               </div>
 
               {/* Variantes y Precios */}
@@ -470,29 +479,24 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                       : 'border-red-200 bg-red-50/20 opacity-80'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={combo.image}
-                        alt={combo.name}
-                        className="w-12 h-12 rounded-xl object-cover border border-[#E5DCCB] shrink-0 bg-[#FAF7F2]"
-                        loading="lazy"
-                      />
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A653E]">
-                          Combo Especial
+                  {/* Encabezado del Combo: Fila 1 Categoría y Stock, Fila 2 Foto y Nombre completo */}
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A653E] bg-[#5A653E]/10 px-2 py-0.5 rounded-md">
+                        Combo Especial
+                      </span>
+                      {combo.badge && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-semibold">
+                          {combo.badge}
                         </span>
-                        <h4 className="text-sm font-bold text-[#1D120D] truncate leading-tight">
-                          {combo.name}
-                        </h4>
-                      </div>
+                      )}
                     </div>
 
                     <button
                       type="button"
                       onClick={() => handleToggleComboStock(combo)}
                       disabled={isStockUpdating}
-                      className={`min-h-[44px] px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
+                      className={`min-h-[38px] px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
                         combo.available
                           ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
                           : 'bg-rose-100 text-rose-900 border border-rose-300 hover:bg-rose-200'
@@ -505,6 +509,21 @@ export const PriceStockTab: React.FC<PriceStockTabProps> = ({
                       />
                       <span>{combo.available ? 'Disponible' : 'Sin stock'}</span>
                     </button>
+                  </div>
+
+                  {/* Fila 2: Miniatura junto a Nombre Completo */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <img
+                      src={combo.image}
+                      alt={combo.name}
+                      className="w-13 h-13 rounded-xl object-cover border border-[#E5DCCB] shrink-0 bg-[#FAF7F2]"
+                      loading="lazy"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-sm font-bold text-[#1D120D] line-clamp-2 leading-snug break-words">
+                        {combo.name}
+                      </h4>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#E5DCCB]/60">
