@@ -270,7 +270,7 @@ export const combos: Combo[] = [
     regularPrice: 64000,
     promoPrice: null,
     badge: 'Familiar',
-    image: '/images/milanesas-nalga.webp',
+    image: '/images/milanesas-cuadrada.webp',
     available: true,
   },
 ];
