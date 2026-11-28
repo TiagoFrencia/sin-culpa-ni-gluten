@@ -68,6 +68,29 @@ export function buildComboInquiryUrl(comboName: string, priceLabel: string, cust
 }
 
 /**
+ * Genera un enlace directo a WhatsApp para consultar por reposición de un producto sin stock.
+ */
+export function buildRestockNotifyUrl(
+  productName: string,
+  variantLabel?: string,
+  customPhone?: string
+): string {
+  const variantPart = variantLabel ? ` (${variantLabel})` : '';
+  const message = `¡Hola! Vi que *${productName}${variantPart}* está sin stock hoy. ¿Me podrían avisar cuando vuelva a estar disponible?`;
+
+  return createWhatsAppLink(message, customPhone);
+}
+
+/**
+ * Genera un enlace directo a WhatsApp para pedir aviso cuando salga un próximo ingreso.
+ */
+export function buildUpcomingNotifyUrl(itemTitle: string, customPhone?: string): string {
+  const message = `¡Hola! Vi en la web que próximamente van a sumar *${itemTitle}* (Sin Gluten) y me gustaría que me avisen cuando esté disponible 🙌`;
+
+  return createWhatsAppLink(message, customPhone);
+}
+
+/**
  * Genera el enlace directo a WhatsApp con el pedido completo armado desde el OrderDrawer.
  */
 export function buildCartOrderUrl(

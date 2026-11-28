@@ -13,7 +13,13 @@ import {
 import { useOrder } from '@/context/OrderContext';
 import { formatPriceARS } from '@/config/business';
 import { buildCartOrderUrl } from '@/utils/whatsapp';
-import { trackMetric, recordOrderIntent } from '@/utils/analytics';
+import {
+  trackMetric,
+  trackChannelAndSlot,
+  recordOrderIntent,
+  getSessionChannel,
+  getCurrentTimeSlotAR,
+} from '@/utils/analytics';
 import { MediaImage } from '@/components/MediaImage';
 import type { DeliveryMethod } from '@/types/order';
 
@@ -411,11 +417,14 @@ export function OrderDrawer() {
               data-testid="whatsapp-order-cta"
               onClick={() => {
                 trackMetric('whatsapp_clicks');
+                trackChannelAndSlot('whatsapp_clicks');
                 recordOrderIntent({
                   items,
                   totalArs: subtotal,
                   itemsCount: totalItems,
                   source: 'carrito',
+                  channel: getSessionChannel(),
+                  timeSlot: getCurrentTimeSlotAR(),
                 });
               }}
               className="w-full inline-flex items-center justify-center gap-2 bg-terracotta-600 hover:bg-terracotta-700 text-cream-50 font-semibold py-3 sm:py-3.5 px-4 rounded-full text-sm sm:text-base shadow-md hover:shadow-lg transition-all active:scale-98 text-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-terracotta-600"

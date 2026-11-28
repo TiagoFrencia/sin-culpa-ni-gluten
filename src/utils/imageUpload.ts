@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
-export type UploadFolder = 'products' | 'combos' | 'pricelist';
+export type UploadFolder = 'products' | 'combos' | 'pricelist' | 'upcoming';
 
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB
 

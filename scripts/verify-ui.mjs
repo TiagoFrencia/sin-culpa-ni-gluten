@@ -68,6 +68,30 @@ async function runVerification() {
   try {
     const page = await browser.newPage();
 
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const url = req.url();
+      const corsHeaders = {
+        'access-control-allow-origin': '*',
+        'access-control-allow-headers': '*',
+        'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+      };
+      if (
+        url.includes('/rest/v1/rpc/increment_daily_metric') ||
+        url.includes('/rest/v1/rpc/track_channel_and_slot') ||
+        url.includes('/rest/v1/rpc/track_product_signal')
+      ) {
+        req.respond({
+          status: 204,
+          contentType: 'application/json',
+          headers: corsHeaders,
+          body: '',
+        });
+      } else {
+        req.continue();
+      }
+    });
+
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         consoleErrors.push(`[Console Error] ${msg.text()}`);
@@ -263,10 +287,10 @@ async function runVerification() {
 
     // Sumar 1 producto sin foto para probar el fallback compacto (ej: prepizza-salsa)
     await page.evaluate(() => {
-      const article = Array.from(document.querySelectorAll('article')).find((a) =>
+      const article = Array.from(document.querySelectorAll('#menu article')).find((a) =>
         a.textContent?.includes('Prepizza')
       );
-      const addBtn = article?.querySelector('button:not([aria-label*="detalles"])');
+      const addBtn = article?.querySelector('button[data-testid^="add-to-cart-"]');
       addBtn?.click();
     });
     await new Promise((r) => setTimeout(r, 350));

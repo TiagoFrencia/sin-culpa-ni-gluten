@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { OrderItem, OrderContextValue } from '@/types/order';
 import { buildOrderItemKey } from '@/types/order';
-import { trackMetric } from '@/utils/analytics';
+import { trackMetric, trackProductSignal, buildCostItemKey } from '@/utils/analytics';
 import { useCatalog } from './useCatalog';
 
 const STORAGE_KEY = 'scng_order_v1';
@@ -68,8 +68,13 @@ function loadInitialItems(): OrderItem[] {
 export function OrderProvider({ children }: { children: React.ReactNode }) {
   const { products, combos } = useCatalog();
   const [items, setItems] = useState<OrderItem[]>(loadInitialItems);
+  const itemsRef = useRef<OrderItem[]>(items);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartAdjusted, setCartAdjusted] = useState(false);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   const clearCartAdjustedNotice = useCallback(() => setCartAdjusted(false), []);
 
@@ -173,6 +178,11 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     (itemInput: Omit<OrderItem, 'quantity' | 'itemKey'> & { quantity?: number; itemKey?: string }) => {
       // Instrumentación silenciosa de analítica
       trackMetric('cart_adds');
+      trackProductSignal(
+        buildCostItemKey(itemInput.type, itemInput.id, itemInput.variantLabel),
+        itemInput.name,
+        'cart_add'
+      );
 
       const generatedKey = itemInput.itemKey || buildOrderItemKey(itemInput.id, itemInput.variantLabel, itemInput.flavor);
       const qtyToAdd = itemInput.quantity && itemInput.quantity > 0 ? itemInput.quantity : 1;
@@ -214,6 +224,15 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const decrementItem = useCallback((itemKey: string) => {
+    const existingItem = itemsRef.current.find((it) => it.itemKey === itemKey);
+    if (existingItem && existingItem.quantity <= 1) {
+      trackProductSignal(
+        buildCostItemKey(existingItem.type, existingItem.id, existingItem.variantLabel),
+        existingItem.name,
+        'cart_remove'
+      );
+    }
+
     setItems((prevItems) => {
       const existing = prevItems.find((it) => it.itemKey === itemKey);
       if (!existing) return prevItems;
@@ -229,6 +248,15 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeItem = useCallback((itemKey: string) => {
+    const existingItem = itemsRef.current.find((it) => it.itemKey === itemKey);
+    if (existingItem) {
+      trackProductSignal(
+        buildCostItemKey(existingItem.type, existingItem.id, existingItem.variantLabel),
+        existingItem.name,
+        'cart_remove'
+      );
+    }
+
     setItems((prevItems) => prevItems.filter((it) => it.itemKey !== itemKey));
   }, []);
 

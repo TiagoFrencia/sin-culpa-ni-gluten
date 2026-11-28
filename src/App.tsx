@@ -4,6 +4,7 @@ import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/Hero';
 import { TrustBar } from '@/components/TrustBar';
 import { CombosSection } from '@/components/CombosSection';
+import { UpcomingSection } from '@/components/UpcomingSection';
 import { TrustBanner } from '@/components/TrustBanner';
 import { CatalogSection } from '@/components/CatalogSection';
 import { StorySection } from '@/components/StorySection';
@@ -14,7 +15,7 @@ import { FloatingOrderBar } from '@/components/FloatingOrderBar';
 import { OrderDrawer } from '@/components/OrderDrawer';
 import { OrderProvider } from '@/context/OrderContext';
 import { CatalogProvider } from '@/context/CatalogContext';
-import { trackMetric } from '@/utils/analytics';
+import { trackMetric, trackChannelAndSlot } from '@/utils/analytics';
 
 // Code splitting estricto: el panel de administración no se descarga en la tienda pública
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
@@ -42,6 +43,7 @@ export function App() {
   useEffect(() => {
     if (!isAdminRoute) {
       trackMetric('visits');
+      trackChannelAndSlot('visits');
     }
   }, [isAdminRoute]);
 
@@ -81,6 +83,9 @@ export function App() {
           <main className="flex-1">
             {/* 1. Combos para Freezer (id="combos" — fondo espresso editorial oscuro) */}
             <CombosSection />
+
+            {/* 1b. Próximamente · Nuevos ingresos (desaparece si no hay ítems activos) */}
+            <UpcomingSection />
 
             {/* 2. TrustBanner (Banda horizontal de corte editorial entre Combos y Menú) */}
             <TrustBanner />

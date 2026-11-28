@@ -31,17 +31,76 @@ async function verifyAdmin() {
     await page.setRequestInterception(true);
     page.on('request', (req) => {
       const url = req.url();
-      // Simular tablas de analíticas vacías si aún no se corrió la migración V3 en la nube
-      if (url.includes('/rest/v1/order_intents') || url.includes('/rest/v1/daily_metrics')) {
+      const corsHeaders = {
+        'access-control-allow-origin': '*',
+        'access-control-allow-headers': '*',
+        'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+      };
+      // Simular tablas de analíticas V3 y V6 vacías si aún no se corrió la migración en la nube
+      if (
+        url.includes('/rest/v1/order_intents') ||
+        url.includes('/rest/v1/daily_metrics') ||
+        url.includes('/rest/v1/product_costs') ||
+        url.includes('/rest/v1/daily_channel_metrics') ||
+        url.includes('/rest/v1/daily_product_signals') ||
+        url.includes('/rest/v1/daily_hourly_metrics')
+      ) {
         req.respond({
           status: 200,
           contentType: 'application/json',
-          headers: {
-            'access-control-allow-origin': '*',
-            'access-control-allow-headers': '*',
-            'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-          },
+          headers: corsHeaders,
           body: JSON.stringify([]),
+        });
+      } else if (
+        url.includes('/rest/v1/rpc/track_channel_and_slot') ||
+        url.includes('/rest/v1/rpc/track_product_signal') ||
+        url.includes('/rest/v1/rpc/increment_daily_metric')
+      ) {
+        req.respond({
+          status: 204,
+          contentType: 'application/json',
+          headers: corsHeaders,
+          body: '',
+        });
+      } else if (url.includes('/rest/v1/upcoming_items')) {
+        // Simular tabla upcoming_items si aún no se corrió la migración V5 en la nube
+        const mockUpcoming = [
+          {
+            id: '11111111-1111-1111-1111-111111111111',
+            title: 'Tarta de Pollo',
+            description: 'Masa casera 100% Sin Gluten con relleno cremoso de pollo y vegetales.',
+            badge: 'Muy pronto',
+            image_url: null,
+            active: true,
+            sort_order: 1,
+            created_at: '2026-11-28T00:00:00.000Z',
+          },
+          {
+            id: '22222222-2222-2222-2222-222222222222',
+            title: 'Tarta de Acelga',
+            description: 'Acelga fresca, queso y masa artesanal lista para hornear.',
+            badge: 'Próximamente',
+            image_url: null,
+            active: true,
+            sort_order: 2,
+            created_at: '2026-11-28T00:00:00.000Z',
+          },
+          {
+            id: '33333333-3333-3333-3333-333333333333',
+            title: 'Ñoquis Caseros',
+            description: 'Ñoquis artesanales de papa 100% Sin Gluten, suaves y listos en minutos.',
+            badge: 'En desarrollo',
+            image_url: null,
+            active: false,
+            sort_order: 3,
+            created_at: '2026-11-28T00:00:00.000Z',
+          },
+        ];
+        req.respond({
+          status: 200,
+          contentType: 'application/json',
+          headers: corsHeaders,
+          body: JSON.stringify(req.method() === 'GET' ? mockUpcoming : []),
         });
       } else {
         req.continue();
@@ -254,6 +313,86 @@ async function verifyAdmin() {
       });
       await new Promise((r) => setTimeout(r, 500));
 
+      // 3b. Sub-pestaña Próximamente en Tab 2 (Fase 11)
+      console.log(`\n--- [${vp.name}] Tab 2b: Sub-pestaña Próximamente ---`);
+      const upcomingTabClicked = await page.evaluate(() => {
+        const tabs = Array.from(document.querySelectorAll('button[role="tab"]'));
+        const upcomingTab = tabs.find((b) => b.innerText.includes('Próximamente'));
+        if (upcomingTab) {
+          upcomingTab.click();
+          return true;
+        }
+        return false;
+      });
+      if (!upcomingTabClicked) {
+        throw new Error('No se encontró el botón selector "Próximamente" en ProductosTab');
+      }
+      await new Promise((r) => setTimeout(r, 500));
+      await checkOverflow(`Tab 2 Próximamente ${vp.name}`);
+
+      const upcomingListCheck = await page.evaluate(() => {
+        const text = document.body.innerText;
+        const switches = document.querySelectorAll('button[role="switch"]');
+        const deleteBtns = document.querySelectorAll('button[aria-label="Eliminar próximo ingreso"]');
+        const addBtn = Array.from(document.querySelectorAll('button')).find((b) =>
+          b.innerText.includes('+ Agregar próximo ingreso')
+        );
+        return {
+          hasTitle: text.includes('Tarta de Pollo') && text.includes('Ñoquis Caseros'),
+          hasSwitches: switches.length >= 3,
+          hasDeleteBtns: deleteBtns.length >= 3,
+          hasAddBtn: Boolean(addBtn),
+        };
+      });
+      console.log(`  [Upcoming List Check] Títulos: ${upcomingListCheck.hasTitle}, Switches: ${upcomingListCheck.hasSwitches}, Eliminar: ${upcomingListCheck.hasDeleteBtns}, +Agregar: ${upcomingListCheck.hasAddBtn}`);
+      if (!upcomingListCheck.hasTitle || !upcomingListCheck.hasSwitches || !upcomingListCheck.hasDeleteBtns || !upcomingListCheck.hasAddBtn) {
+        throw new Error('Falla en la lista o controles de la sub-pestaña Próximamente');
+      }
+
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-03b-upcoming.png`) });
+      console.log(`  ✓ Captura guardada: admin-${vp.width}-03b-upcoming.png`);
+
+      // Abrir Modal "+ Agregar próximo ingreso"
+      console.log(`  Abriendo Modal "+ Agregar próximo ingreso"...`);
+      await page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        const addBtn = buttons.find((b) => b.innerText.includes('+ Agregar próximo ingreso'));
+        if (addBtn) addBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 500));
+
+      await checkOverflow(`Modal Próximo Ingreso ${vp.name}`);
+      await checkElementWithinBounds('button[aria-label="Cerrar modal"]', 'Modal Próximo Ingreso: Botón Cerrar (X)');
+      await checkElementWithinBounds('input[placeholder="Ej. Tarta de Pollo"]', 'Modal Próximo Ingreso: Input Nombre');
+
+      const upcomingModalCheck = await page.evaluate(() => {
+        const hasTitleInput = Boolean(document.querySelector('input[placeholder="Ej. Tarta de Pollo"]'));
+        const hasBadgeInput = Boolean(document.querySelector('input[placeholder*="Próximamente"]'));
+        const hasDescTextarea = Boolean(document.querySelector('textarea[rows="2"]'));
+        const hasVisibleSwitch = Boolean(document.querySelector('button[aria-label="Visible en la tienda"]'));
+        return { hasTitleInput, hasBadgeInput, hasDescTextarea, hasVisibleSwitch };
+      });
+      console.log(`  [Upcoming Modal Check] Nombre: ${upcomingModalCheck.hasTitleInput}, Etiqueta: ${upcomingModalCheck.hasBadgeInput}, Descripción textarea: ${upcomingModalCheck.hasDescTextarea}, Switch Visible: ${upcomingModalCheck.hasVisibleSwitch}`);
+      if (!upcomingModalCheck.hasTitleInput || !upcomingModalCheck.hasBadgeInput || !upcomingModalCheck.hasDescTextarea || !upcomingModalCheck.hasVisibleSwitch) {
+        throw new Error('El modal de Próximo Ingreso no contiene todos los campos requeridos');
+      }
+
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-04b-upcoming-modal.png`) });
+      console.log(`  ✓ Captura guardada: admin-${vp.width}-04b-upcoming-modal.png`);
+
+      // Cerrar modal y volver a Catálogo
+      await page.evaluate(() => {
+        const closeBtn = document.querySelector('button[aria-label="Cerrar modal"]');
+        if (closeBtn) closeBtn.click();
+      });
+      await new Promise((r) => setTimeout(r, 300));
+      await page.evaluate(() => {
+        const tabs = Array.from(document.querySelectorAll('button[role="tab"]'));
+        const catalogTab = tabs.find((b) => b.innerText.includes('Catálogo'));
+        if (catalogTab) catalogTab.click();
+      });
+      await new Promise((r) => setTimeout(r, 300));
+
       // 4. Tab 3: Combos
       console.log(`\n--- [${vp.name}] Tab 3: Combos ---`);
       await page.evaluate(() => {
@@ -357,49 +496,113 @@ async function verifyAdmin() {
       await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-07-business.png`) });
       console.log(`  ✓ Captura guardada: admin-${vp.width}-07-business.png`);
 
-      // 5. Tab 5: Métricas del Negocio (Fase 10)
-      console.log(`\n--- [${vp.name}] Tab 5: Métricas del Negocio ---`);
+      // 5. Tab 5: Métricas del Negocio (Fase 12: 4 sub-vistas + Excel)
+      console.log(`\n--- [${vp.name}] Tab 5: Métricas del Negocio (4 Sub-vistas) ---`);
       await page.evaluate(() => {
         const navButtons = Array.from(document.querySelectorAll('nav button'));
         const tabBtn = navButtons.find((b) => b.innerText.includes('Métricas'));
         if (tabBtn) tabBtn.click();
       });
       await new Promise((r) => setTimeout(r, 600));
-      await checkOverflow(`Tab 5 Métricas ${vp.name}`);
+      await checkOverflow(`Tab 5 Métricas Resumen ${vp.name}`);
 
-      // Comprobar elementos clave de analíticas y contabilidad
-      const analyticsCheck = await page.evaluate(() => {
+      // Sub-vista 1: Resumen
+      const analyticsSummaryCheck = await page.evaluate(() => {
         const text = document.body.innerText.toLowerCase();
         return {
           hasHeader: text.includes('métricas del negocio'),
           hasConfirmedSales: text.includes('ventas confirmadas'),
           hasPending: text.includes('por confirmar'),
           hasTicket: text.includes('ticket promedio'),
-          hasFunnel: text.includes('embudo de conversión') || text.includes('visitas'),
+          hasMargin: text.includes('margen bruto'),
+          hasFunnel: text.includes('embudo de conversión'),
           hasRanking: text.includes('ranking de platos'),
-          hasReconciliation: text.includes('conciliación de pedidos'),
-          hasExportCSV: Boolean(
-            document.querySelector('button[title*="CSV"]') ||
-            Array.from(document.querySelectorAll('button')).some((b) => b.innerText.toLowerCase().includes('exportar csv'))
+          hasBasket: text.includes('se compran juntos'),
+          hasExportExcel: Array.from(document.querySelectorAll('button')).some((b) =>
+            b.innerText.toLowerCase().includes('exportar excel')
+          ),
+          hasExportCSV: Array.from(document.querySelectorAll('button')).some((b) =>
+            b.innerText.trim().toLowerCase() === 'csv'
           ),
         };
       });
 
-      console.log(`  [Analytics Tab Check] Header: ${analyticsCheck.hasHeader}, Ventas Confirmadas: ${analyticsCheck.hasConfirmedSales}, Ticket: ${analyticsCheck.hasTicket}, Embudo: ${analyticsCheck.hasFunnel}, Ranking: ${analyticsCheck.hasRanking}, Export CSV: ${analyticsCheck.hasExportCSV}`);
-
+      console.log(`  [Analytics Resumen Check]`, analyticsSummaryCheck);
       if (
-        !analyticsCheck.hasHeader ||
-        !analyticsCheck.hasConfirmedSales ||
-        !analyticsCheck.hasPending ||
-        !analyticsCheck.hasTicket ||
-        !analyticsCheck.hasRanking ||
-        !analyticsCheck.hasExportCSV
+        !analyticsSummaryCheck.hasHeader ||
+        !analyticsSummaryCheck.hasConfirmedSales ||
+        !analyticsSummaryCheck.hasPending ||
+        !analyticsSummaryCheck.hasTicket ||
+        !analyticsSummaryCheck.hasMargin ||
+        !analyticsSummaryCheck.hasRanking ||
+        !analyticsSummaryCheck.hasBasket ||
+        !analyticsSummaryCheck.hasExportExcel ||
+        !analyticsSummaryCheck.hasExportCSV
       ) {
-        throw new Error('La pestaña Métricas no contiene todos los módulos contables requeridos');
+        throw new Error('La sub-vista Resumen de Métricas no contiene todos los módulos requeridos');
       }
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-08a-analytics-resumen.png`) });
 
-      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-08-analytics.png`) });
-      console.log(`  ✓ Captura guardada: admin-${vp.width}-08-analytics.png`);
+      // Sub-vista 2: Pedidos
+      await page.evaluate(() => {
+        const tabs = Array.from(document.querySelectorAll('button[role="tab"]'));
+        const ordersTab = tabs.find((b) => b.innerText.includes('Pedidos'));
+        if (ordersTab) ordersTab.click();
+      });
+      await new Promise((r) => setTimeout(r, 400));
+      await checkOverflow(`Tab 5 Métricas Pedidos ${vp.name}`);
+      const ordersViewOk = await page.evaluate(() =>
+        document.body.innerText.toLowerCase().includes('conciliación de pedidos')
+      );
+      if (!ordersViewOk) throw new Error('Falla en sub-vista Pedidos');
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-08b-analytics-pedidos.png`) });
+
+      // Sub-vista 3: Mercado
+      await page.evaluate(() => {
+        const tabs = Array.from(document.querySelectorAll('button[role="tab"]'));
+        const marketTab = tabs.find((b) => b.innerText.includes('Mercado'));
+        if (marketTab) marketTab.click();
+      });
+      await new Promise((r) => setTimeout(r, 400));
+      await checkOverflow(`Tab 5 Métricas Mercado ${vp.name}`);
+      const marketViewOk = await page.evaluate(() => {
+        const t = document.body.innerText.toLowerCase();
+        return t.includes('qué quieren que lancemos') && t.includes('sensibilidad de precios') && t.includes('atribución de canales');
+      });
+      if (!marketViewOk) throw new Error('Falla en sub-vista Mercado');
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-08c-analytics-mercado.png`) });
+
+      // Sub-vista 4: Costos
+      await page.evaluate(() => {
+        const tabs = Array.from(document.querySelectorAll('button[role="tab"]'));
+        const costsTab = tabs.find((b) => b.innerText.includes('Costos'));
+        if (costsTab) costsTab.click();
+      });
+      await new Promise((r) => setTimeout(r, 400));
+      await checkOverflow(`Tab 5 Métricas Costos ${vp.name}`);
+      const costsViewOk = await page.evaluate(() => {
+        const t = document.body.innerText.toLowerCase();
+        return t.includes('costos privados y márgenes') && t.includes('guardar costos');
+      });
+      if (!costsViewOk) throw new Error('Falla en sub-vista Costos');
+      await page.screenshot({ path: path.join(OUTPUT_DIR, `admin-${vp.width}-08d-analytics-costos.png`) });
+      console.log(`  ✓ Capturas guardadas de las 4 sub-vistas de Métricas (${vp.width}px)`);
+
+      if (vp.width === 390) {
+        // Probar exportación Excel (.xlsx) con lazy import en el navegador
+        console.log(`  Probando generación de Excel (.xlsx) multi-hoja...`);
+        await page.evaluate(() => {
+          const btn = Array.from(document.querySelectorAll('button')).find((b) =>
+            b.innerText.toLowerCase().includes('exportar excel')
+          );
+          if (btn) btn.click();
+        });
+        await page.waitForFunction(
+          () => document.body.innerText.includes('Excel generado: SinCulpaNiGluten_Reporte_'),
+          { timeout: 10000 }
+        );
+        console.log('  ✓ Exportación Excel (.xlsx) ejecutada con éxito sin errores.');
+      }
     }
 
     // -------------------------------------------------------------------------

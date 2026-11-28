@@ -1,6 +1,6 @@
 /* oxlint-disable react/only-export-components */
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
-import type { Product, Combo, ProductCategory } from '@/types/catalog';
+import type { Product, Combo, ProductCategory, UpcomingItem } from '@/types/catalog';
 import { PRODUCTS, COMBOS } from '@/data/catalog';
 import { BUSINESS_CONFIG, type BusinessConfig } from '@/config/business';
 import { supabase } from '@/lib/supabase';
@@ -14,12 +14,14 @@ interface CatalogCacheData {
   products: Product[];
   combos: Combo[];
   business: BusinessConfig;
+  upcomingItems?: UpcomingItem[];
   timestamp: number;
 }
 
 export interface CatalogContextType {
   products: Product[];
   combos: Combo[];
+  upcomingItems: UpcomingItem[];
   business: BusinessConfig;
   isLoading: boolean;
   isLive: boolean; // true si conectó exitosamente a Supabase
@@ -32,7 +34,12 @@ export interface CatalogContextType {
 
 export const CatalogContext = createContext<CatalogContextType | null>(null);
 
-function loadInitialCatalog(): { products: Product[]; combos: Combo[]; business: BusinessConfig } {
+function loadInitialCatalog(): {
+  products: Product[];
+  combos: Combo[];
+  upcomingItems: UpcomingItem[];
+  business: BusinessConfig;
+} {
   if (typeof window !== 'undefined') {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -49,6 +56,7 @@ function loadInitialCatalog(): { products: Product[]; combos: Combo[]; business:
           return {
             products: parsed.products,
             combos: parsed.combos,
+            upcomingItems: Array.isArray(parsed.upcomingItems) ? parsed.upcomingItems : [],
             business: parsed.business,
           };
         }
@@ -62,6 +70,7 @@ function loadInitialCatalog(): { products: Product[]; combos: Combo[]; business:
   return {
     products: PRODUCTS,
     combos: COMBOS,
+    upcomingItems: [],
     business: BUSINESS_CONFIG,
   };
 }
@@ -70,6 +79,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [initial] = useState(loadInitialCatalog);
   const [products, setProducts] = useState<Product[]>(initial.products);
   const [combos, setCombos] = useState<Combo[]>(initial.combos);
+  const [upcomingItems, setUpcomingItems] = useState<UpcomingItem[]>(initial.upcomingItems);
   const [business, setBusiness] = useState<BusinessConfig>(initial.business);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isLive, setIsLive] = useState<boolean>(false);
@@ -84,10 +94,23 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setIsLoading(true);
       setError(null);
 
-      const [productsRes, combosRes, businessRes] = await Promise.all([
+      // Consulta aislada para upcoming_items: si la tabla aún no existe en remoto,
+      // devuelve [] sin interrumpir la carga de products, combos ni business_settings.
+      const upcomingPromise = supabase
+        .from('upcoming_items')
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true })
+        .then(
+          (res) => res,
+          (err) => ({ data: null, error: err })
+        );
+
+      const [productsRes, combosRes, businessRes, upcomingRes] = await Promise.all([
         supabase.from('products').select('*').order('sort_order', { ascending: true }),
         supabase.from('combos').select('*').order('sort_order', { ascending: true }),
         supabase.from('business_settings').select('*').eq('id', 1).maybeSingle(),
+        upcomingPromise,
       ]);
 
       if (productsRes.error) throw productsRes.error;
@@ -96,6 +119,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       let nextProducts = products;
       let nextCombos = combos;
+      let nextUpcomingItems: UpcomingItem[] = [];
       let nextBusiness = business;
 
       if (productsRes.data && productsRes.data.length > 0) {
@@ -134,6 +158,26 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setCombos(nextCombos);
       }
 
+      if (upcomingRes.error) {
+        console.warn('[CatalogContext] upcoming_items no disponible aún:', upcomingRes.error.message || upcomingRes.error);
+        nextUpcomingItems = [];
+        setUpcomingItems([]);
+      } else if (Array.isArray(upcomingRes.data)) {
+        nextUpcomingItems = upcomingRes.data.map((row) => ({
+          id: String(row.id),
+          title: String(row.title ?? ''),
+          description: String(row.description ?? ''),
+          badge: String(row.badge || 'Próximamente'),
+          imageUrl: row.image_url ? String(row.image_url) : null,
+          active: Boolean(row.active),
+          sortOrder: Number(row.sort_order ?? 0),
+          createdAt: String(row.created_at ?? ''),
+        }));
+        setUpcomingItems(nextUpcomingItems);
+      } else {
+        setUpcomingItems([]);
+      }
+
       if (businessRes.data) {
         const row = businessRes.data;
         nextBusiness = {
@@ -163,6 +207,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const cachePayload: CatalogCacheData = {
             products: nextProducts,
             combos: nextCombos,
+            upcomingItems: nextUpcomingItems,
             business: nextBusiness,
             timestamp: Date.now(),
           };
@@ -214,6 +259,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     () => ({
       products,
       combos,
+      upcomingItems,
       business,
       isLoading,
       isLive,
@@ -223,7 +269,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       getProductsByCategory,
       getFeaturedProducts,
     }),
-    [products, combos, business, isLoading, isLive, error, fetchFromSupabase, getProductById, getProductsByCategory, getFeaturedProducts]
+    [products, combos, upcomingItems, business, isLoading, isLive, error, fetchFromSupabase, getProductById, getProductsByCategory, getFeaturedProducts]
   );
 
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;

@@ -41,3 +41,14 @@ export interface Combo {
   available: boolean;
   sortOrder?: number;
 }
+
+export interface UpcomingItem {
+  id: string;
+  title: string;
+  description: string;
+  badge: string;
+  imageUrl: string | null;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+}

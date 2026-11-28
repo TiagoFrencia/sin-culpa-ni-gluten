@@ -93,6 +93,13 @@ Aquí administran la información detallada de su oferta de alimentos libres de 
    * **Detalles adicionales opcionales:** tips de cocción, tiempo en freezer, si acepta consultar por 500g o destacarlo en la portada.
 3. Toquen **"Guardar Producto"**.
 
+### 🚀 Sub-pestaña "Próximamente" (adelantar nuevos ingresos)
+Dentro de la misma pestaña **"Productos"**, arriba tienen el selector **`Próximamente`** para anticipar platos que están desarrollando (como tartas o pastas) antes de sacarlos a la venta:
+1. Toquen **`Próximamente`** y luego **`+ Agregar próximo ingreso`**.
+2. Carguen el **Nombre**, una **Etiqueta corta** (ej. *Muy pronto*, *Próximamente*, *En desarrollo*) y una **Descripción breve**. **No hace falta cargar precio ni subir foto** (la foto es opcional).
+3. Con el interruptor **Visible / Oculto** deciden en un toque si se muestra en la tienda. Si no queda ningún ítem visible, la sección se oculta automáticamente de la web.
+4. En la tienda, sus clientes verán el adelanto con un botón **"Avisame cuando salga"** que les abre WhatsApp con el mensaje listo para pedirles aviso.
+
 ### Crear o editar combos para freezer
 En la pestaña **"Combos"**:
 1. Toquen **`+ Nuevo Combo`** (o el lápiz de edición).
@@ -152,41 +159,62 @@ A partir de ese momento ingresarán al panel con su nueva clave personal.
 
 ---
 
-## 📊 5. Pestaña "Métricas" (control de pedidos y contabilidad)
+## 📊 5. Pestaña "Métricas" (control contable, márgenes e inteligencia de mercado)
 
-La pestaña **"Métricas"** les brinda el control real de los números de su emprendimiento, con un criterio contable transparente y sin números inflados.
+La pestaña **"Métricas"** les brinda el control real de los números de su emprendimiento, con un criterio contable transparente, ganancia bruta real y señales de qué buscan sus clientes.
 
 ### 📅 Filtrar por período
 Arriba de todo pueden elegir qué lapso de tiempo consultar con un toque:
 * **`7 días`:** ideal para el balance semanal.
-* **`Este mes`:** seguimiento del mes en curso.
+* **`Este mes`:** seguimiento del mes en curso (comparando automáticamente contra el mes anterior).
 * **`Mes anterior`:** para revisar cómo cerró el mes que pasó.
 * **`Todo`:** el historial acumulado desde el inicio.
 
-### 💰 Pedidos iniciados vs. Ventas confirmadas (Caja real)
-El sistema separa claramente dos conceptos para que su contabilidad sea exacta:
-1. **Pedidos iniciados / Por confirmar (Pendientes):** Son clientes que armaron su carrito en la web e hicieron clic para enviar el pedido a WhatsApp. Reflejan intenciones de compra.
-2. **Ventas confirmadas (Caja real):** Es el dinero real de los pedidos que efectivamente cerraron, cobraron o coordinaron entrega. **Este indicador representa la plata que ingresó a su caja.**
+### 🗂️ Las 4 sub-vistas de Métricas
+Debajo del período verán 4 botones para cambiar de vista sin recargar la pantalla:
 
-### 📋 Gestión de pedidos: Estados, notas internas y pedidos de prueba
-En la lista de pedidos recientes pueden revisar cada orden recibida:
-* **Cambiar el estado con un toque:**
-  * **`Confirmado` (Verde):** toquen este botón cuando el cliente haya pagado o coordinado la entrega. Suma automáticamente a las **Ventas Confirmadas**.
-  * **`Pendiente` (Amarillo):** para pedidos que recién llegan y están coordinando por WhatsApp.
-  * **`Cancelado` (Rojo):** si el cliente canceló o no concretó la compra.
-* **Notas internas:** pueden tocar el ícono de lápiz/nota para guardar aclaraciones internas (ej. *"Abona en efectivo al retirar"*, *"Entrega jueves 18 hs"*, *"Sin cebolla"*). Estas notas son 100% privadas para ustedes.
-* **Eliminar pedidos de prueba:** si ustedes mismos hicieron compras de prueba para probar la web, pueden tocar el ícono del cesto de basura en ese pedido para borrarlo y mantener sus estadísticas limpias.
+1. **`Resumen` (Contabilidad y Crecimiento):**
+   * **Ventas confirmadas (Caja real):** el dinero real de los pedidos cobrados o coordinados, con la variación porcentual respecto al período anterior.
+   * **Por confirmar (Pendientes):** intenciones enviadas por WhatsApp que todavía están esperando cierre o pago.
+   * **Ticket promedio y Margen Bruto estimado:** muestra cuánto ganan realmente después de descontar el costo de mercadería (**CMV**).
+   * **Medios de pago, Clientes Nuevos vs. Recurrentes y Top Barrios de Río Cuarto.**
+   * **Ranking de Platos y Combos:** alternable por *Facturación ($)*, *Ganancia Bruta ($)* o *Unidades*. Los platos marcados con **`80/20`** son los que concentran el 80% de sus ingresos.
+   * **Se compran juntos:** muestra las combinaciones de productos que más se repiten en un mismo pedido para darles ideas de nuevos combos.
 
-### 🏆 Ranking de productos y Embudo de visitas
-* **Ranking de comidas más pedidas:** Pueden ordenarlo con los botones:
-  * **`Por facturado ($)`:** qué comida les generó más dinero.
-  * **`Por unidades`:** qué producto o combo se vendió más cantidad de veces.
-  *(Pueden filtrar el ranking entre solo confirmados o todos los pedidos).*
-* **Embudo de visitas:** les muestra cuántas personas entraron a la tienda, cuántas abrieron la lista de precios, cuántas sumaron cosas al carrito y la tasa de conversión final a WhatsApp.
+2. **`Pedidos` (Conciliación rápida):**
+   * Controlen cada pedido recibido y cambien el estado con un toque (**`Confirmado`**, **`Pendiente`** o **`Cancelado`**).
+   * Al tocar **"Detalle y pago"** dentro de un pedido pueden etiquetar al instante:
+     * **Medio de pago:** *Transferencia*, *Efectivo*, *Mercado Pago* o *Tarjeta*.
+     * **Barrio / Zona:** *Centro*, *Banda Norte*, *Alberdi*, *Oeste*, *Las Higueras* u *Otro*.
+     * **Cliente:** *Nuevo* o *Recurrente*.
+   * También pueden dejar **notas internas privadas** y borrar pedidos de prueba con el ícono del cesto.
 
-### 📑 Exportar a Excel ("Exportar CSV")
-* Toquen el botón verde **"Exportar CSV"** arriba a la derecha.
-* Se descargará al instante un archivo compatible con Microsoft Excel o Google Sheets con la fecha, cliente, comida pedida, totales, estado y notas, listo para archivar o compartir con su contador.
+3. **`Mercado` (Pulso y Demanda):**
+   * **Qué quieren que lancemos:** ranking de clics en *"Avisame cuando salga"* dentro de la sección Próximamente.
+   * **Sensibilidad de precios:** compara cuántas veces suman un plato al carrito vs. cuántas veces lo sacan antes de enviar el pedido.
+   * **Demanda insatisfecha:** clics en *"Consultar 500g / Precio a consultar"* y avisos en productos sin stock (*"Avisame cuando vuelva"*).
+   * **Atribución de canales, Franjas horarias y Días calientes:** en qué horarios y días llegan más visitas y pedidos.
+
+4. **`Costos` (100% privado para ustedes):**
+   * Lista todos sus productos y combos actuales con el precio de venta vigente.
+   * Escriban el **costo unitario ($)** de cada plato y toquen **"Guardar costos"**. Al instante verán la **Ganancia ($)** y el **Margen (%)** en verde (>40%), amarillo (25-40%) o rojo (<25%). Los clientes nunca ven esta información.
+
+### 📑 Exportar Excel Profesional (`.xlsx` de 6 hojas) y CSV
+* Toquen el botón verde **"Exportar Excel (.xlsx)"** arriba a la derecha para descargar un libro completo llamado `SinCulpaNiGluten_Reporte_YYYY-MM-DD.xlsx` con **6 hojas listas para su contadora y tablas dinámicas**:
+  1. **`1_Resumen_Ejecutivo`**: todos los KPIs, márgenes, medios de pago, barrios y tipo de cliente.
+  2. **`2_Libro_Pedidos`**: un pedido por fila con costos, ganancia, margen % y fila de totales con fórmulas automáticas.
+  3. **`3_Detalle_Items`**: cada producto desagregado por línea, listo para armar Tablas Dinámicas en Excel.
+  4. **`4_Ranking_y_Margen`**: ranking con participación % Pareto 80/20, CMV, ganancia y pares frecuentes.
+  5. **`5_Trafico_y_Canales`**: serie día por día y consolidado por canal.
+  6. **`6_Pulso_Mercado`**: interés en Próximamente, sensibilidad de precios, 500g, falta de stock y franjas horarias.
+* Al lado conservan el botón **"CSV"** como respaldo rápido en texto plano.
+
+### 🔗 Tip práctico para medir Instagram y WhatsApp
+Para saber con exactitud cuántas ventas llegan desde cada red, usen enlaces con etiqueta al compartir su tienda:
+* **En la bio o historias de Instagram:** `https://sin-culpa-ni-gluten.vercel.app/?utm_source=instagram`
+* **En sus Estados o mensajes de WhatsApp:** `https://sin-culpa-ni-gluten.vercel.app/?utm_source=whatsapp`
+
+El sistema detectará automáticamente de dónde vino cada cliente y lo mostrará en la vista **Mercado** y en el Excel.
 
 ---
 

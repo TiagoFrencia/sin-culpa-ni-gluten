@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import type { Product, ProductCategory, ProductVariant } from '@/types/catalog';
+import type { Product, ProductCategory, ProductVariant, UpcomingItem } from '@/types/catalog';
 import { supabase } from '@/lib/supabase';
 import { compressAndUploadImage, deleteOldCatalogImage } from '@/utils/imageUpload';
+import { UpcomingManager } from '@/components/admin/UpcomingManager';
 import {
   Plus,
   Edit2,
@@ -27,6 +28,7 @@ const CATEGORY_OPTIONS: { value: ProductCategory; label: string }[] = [
 
 interface ProductsTabProps {
   products: Product[];
+  upcomingItems: UpcomingItem[];
   onRefresh: () => Promise<void>;
   showToast: (text: string, type?: 'success' | 'error' | 'info') => void;
 }
@@ -83,9 +85,11 @@ function formatPriceARS(price: number | null | undefined): string {
 
 export const ProductsTab: React.FC<ProductsTabProps> = ({
   products,
+  upcomingItems,
   onRefresh,
   showToast,
 }) => {
+  const [activeSubTab, setActiveSubTab] = useState<'catalog' | 'upcoming'>('catalog');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(DEFAULT_FORM_DATA);
@@ -344,7 +348,49 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   };
 
   return (
-    <div className="space-y-4 pb-16">
+    <div className="space-y-4 pb-16 min-w-0">
+      {/* Selector segmentado compacto: Catálogo vs Próximamente */}
+      <div
+        role="tablist"
+        aria-label="Secciones de productos"
+        className="grid grid-cols-2 gap-1 p-1 bg-[#FAF7F2] border border-[#E5DCCB] rounded-xl"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeSubTab === 'catalog'}
+          onClick={() => setActiveSubTab('catalog')}
+          className={`min-h-[40px] px-2.5 py-2 rounded-lg text-xs font-bold transition-all truncate ${
+            activeSubTab === 'catalog'
+              ? 'bg-[#1D120D] text-[#FAF7F2] shadow-xs'
+              : 'text-[#6B574B] hover:text-[#1D120D]'
+          }`}
+        >
+          Catálogo ({products.length})
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeSubTab === 'upcoming'}
+          onClick={() => setActiveSubTab('upcoming')}
+          className={`min-h-[40px] px-2.5 py-2 rounded-lg text-xs font-bold transition-all truncate ${
+            activeSubTab === 'upcoming'
+              ? 'bg-[#1D120D] text-[#FAF7F2] shadow-xs'
+              : 'text-[#6B574B] hover:text-[#1D120D]'
+          }`}
+        >
+          Próximamente ({upcomingItems.length})
+        </button>
+      </div>
+
+      {activeSubTab === 'upcoming' ? (
+        <UpcomingManager
+          items={upcomingItems}
+          onRefresh={onRefresh}
+          showToast={showToast}
+        />
+      ) : (
+        <>
       {/* Botón Prominente + Nuevo Producto */}
       <div className="flex items-center justify-between gap-3 bg-[#FAF7F2] p-4 rounded-2xl border border-[#E5DCCB]">
         <div>
@@ -882,6 +928,8 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

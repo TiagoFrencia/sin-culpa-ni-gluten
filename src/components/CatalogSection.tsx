@@ -10,12 +10,14 @@ import {
   MessageCircle,
   AlertCircle,
   Sparkles,
+  Bell,
 } from 'lucide-react';
 import { CATEGORY_LABELS } from '@/data/catalog';
 import type { Product, ProductCategory, ProductVariant } from '@/types/catalog';
 import { formatPriceARS } from '@/config/business';
 import { MediaImage } from '@/components/MediaImage';
-import { buildDirectProductUrl, buildHalfKgInquiryUrl } from '@/utils/whatsapp';
+import { buildDirectProductUrl, buildHalfKgInquiryUrl, buildRestockNotifyUrl } from '@/utils/whatsapp';
+import { trackProductSignal, buildCostItemKey } from '@/utils/analytics';
 import { ProductInfoModal } from '@/components/ProductInfoModal';
 import { PriceListModal } from '@/components/PriceListModal';
 import { useOrder } from '@/context/OrderContext';
@@ -85,6 +87,7 @@ function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
   );
 
   const halfKgUrl = buildHalfKgInquiryUrl(product.name);
+  const restockUrl = buildRestockNotifyUrl(product.name, selectedVariant.label);
 
   return (
     <article className="bg-cream-50 border border-cream-200 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group">
@@ -161,7 +164,16 @@ function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
                       type="button"
                       role="radio"
                       aria-checked={isSelected}
-                      onClick={() => setSelectedVariantId(v.id)}
+                      onClick={() => {
+                        if (v.price === null && v.id !== selectedVariantId) {
+                          trackProductSignal(
+                            buildCostItemKey('product', product.id, v.label),
+                            product.name,
+                            'consult_500g'
+                          );
+                        }
+                        setSelectedVariantId(v.id);
+                      }}
                       className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-150 text-center ${
                         isSelected
                           ? 'bg-cream-50 text-ink-900 shadow-2xs border border-cream-200/60'
@@ -242,21 +254,48 @@ function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
         {/* Acciones principales */}
         <div className="space-y-2">
           {!product.available ? (
-            <a
-              href={directProductUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full inline-flex items-center justify-center gap-2 border border-cream-200 bg-cream-100 hover:bg-cream-200/60 text-ink-900 font-semibold px-4 py-2.5 rounded-full text-xs sm:text-sm transition-all"
-            >
-              <MessageCircle className="w-4 h-4 text-terracotta-600" aria-hidden="true" />
-              <span>Consultar próxima tanda</span>
-            </a>
+            <div className="space-y-1.5">
+              <a
+                href={directProductUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 border border-cream-200 bg-cream-100 hover:bg-cream-200/60 text-ink-900 font-semibold px-4 py-2.5 rounded-full text-xs sm:text-sm transition-all"
+              >
+                <MessageCircle className="w-4 h-4 text-terracotta-600" aria-hidden="true" />
+                <span>Consultar próxima tanda</span>
+              </a>
+              <div className="text-center">
+                <a
+                  href={restockUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() =>
+                    trackProductSignal(
+                      buildCostItemKey('product', product.id, selectedVariant.label),
+                      product.name,
+                      'out_of_stock'
+                    )
+                  }
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-olive-600 hover:text-terracotta-600 transition-colors py-0.5"
+                >
+                  <Bell className="w-3 h-3" aria-hidden="true" />
+                  <span>Avisame cuando vuelva</span>
+                </a>
+              </div>
+            </div>
           ) : selectedVariant.price === null ? (
             /* Producto con price: null (Pan Integral, Roulet y Pollo Relleno) */
             <a
               href={directProductUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackProductSignal(
+                  buildCostItemKey('product', product.id, selectedVariant.label),
+                  product.name,
+                  'consult_500g'
+                )
+              }
               className="w-full inline-flex items-center justify-center gap-2 bg-terracotta-600 hover:bg-terracotta-700 text-cream-50 font-semibold px-4 py-2.5 rounded-full text-xs sm:text-sm transition-all shadow-xs active:scale-95 text-center"
             >
               <MessageCircle className="w-4 h-4" aria-hidden="true" />
@@ -338,6 +377,13 @@ function ProductCard({ product, onOpenInfo, onAddToCart }: ProductCardProps) {
                 href={halfKgUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() =>
+                  trackProductSignal(
+                    buildCostItemKey('product', product.id, selectedVariant.label),
+                    product.name,
+                    'consult_500g'
+                  )
+                }
                 className="text-[11px] font-semibold text-olive-600 hover:text-terracotta-600 transition-colors inline-flex items-center gap-1"
               >
                 <span>¿Preferís pack de 500g? Consultanos →</span>

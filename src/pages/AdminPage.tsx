@@ -22,7 +22,7 @@ import {
 type AdminTab = 'express' | 'products' | 'combos' | 'business' | 'analytics';
 
 export const AdminPage: React.FC = () => {
-  const { products, combos, business, refreshCatalog, isLoading: isCatalogLoading } = useCatalog();
+  const { products, combos, upcomingItems, business, refreshCatalog, isLoading: isCatalogLoading } = useCatalog();
 
   // Estado de autenticación
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(() => (!supabase ? false : null));
@@ -260,6 +260,7 @@ export const AdminPage: React.FC = () => {
         {activeTab === 'products' && (
           <ProductsTab
             products={products}
+            upcomingItems={upcomingItems}
             onRefresh={refreshCatalog}
             showToast={showToast}
           />
